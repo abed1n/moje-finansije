@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: pfm-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-pfm_db}
+      POSTGRES_USER: ${POSTGRES_USER:-pfm_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin123}
+    volumes:
+      - pfm-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pfm_user} -d ${POSTGRES_DB:-pfm_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  app:
+    build: .
+    container_name: pfm-app
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-pfm_db}
+      DB_USER: ${POSTGRES_USER:-pfm_user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-admin123}
+      # Demo podaci pri prvom pokretanju (demo@pfm.me / demo123)
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
+      UPLOADS_DIR: /app/uploads
+      # Za produkciju: generisi vlastite kljuceve (vidi .env.example),
+      # mountaj ih dole i otkomentarisi ove dvije varijable
+      # JWT_PRIVATE_KEY_LOCATION: /app/keys/privateKey.pem
+      # JWT_PUBLIC_KEY_LOCATION: /app/keys/publicKey.pem
+    volumes:
+      - pfm-uploads:/app/uploads
+      # - ./keys:/app/keys:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/q/health/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  pfm-data:
+  pfm-uploads:

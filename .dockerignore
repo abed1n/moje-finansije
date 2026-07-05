@@ -1,0 +1,9 @@
+target/
+.git/
+.idea/
+.mvn/wrapper/*.jar
+uploads/
+keys/
+.env
+*.iml
+README.md

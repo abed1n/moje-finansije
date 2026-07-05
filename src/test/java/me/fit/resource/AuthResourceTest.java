@@ -1,0 +1,66 @@
+package me.fit.resource;
+
+import io.quarkus.test.junit.QuarkusTest;
+import org.junit.jupiter.api.Test;
+
+import java.util.Map;
+
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
+
+@QuarkusTest
+class AuthResourceTest {
+
+    @Test
+    void registerLoginAndMe() {
+        String email = "auth-" + System.nanoTime() + "@pfm.me";
+
+        String token = given()
+                .contentType("application/json")
+                .body(Map.of("name", "Test Korisnik", "email", email, "password", "tajna123"))
+                .when().post("/api/auth/register")
+                .then().statusCode(201)
+                .body("token", notNullValue())
+                .body("user.email", equalTo(email))
+                .body("user.role", equalTo("USER"))
+                .extract().path("token");
+
+        given().header("Authorization", "Bearer " + token)
+                .when().get("/api/auth/me")
+                .then().statusCode(200)
+                .body("email", equalTo(email));
+
+        // dupli email -> 409
+        given().contentType("application/json")
+                .body(Map.of("name", "Duplikat", "email", email, "password", "tajna123"))
+                .when().post("/api/auth/register")
+                .then().statusCode(409);
+
+        // login sa ispravnom lozinkom
+        given().contentType("application/json")
+                .body(Map.of("email", email, "password", "tajna123"))
+                .when().post("/api/auth/login")
+                .then().statusCode(200)
+                .body("token", notNullValue());
+
+        // login sa pogresnom lozinkom
+        given().contentType("application/json")
+                .body(Map.of("email", email, "password", "pogresna"))
+                .when().post("/api/auth/login")
+                .then().statusCode(401);
+    }
+
+    @Test
+    void meWithoutTokenReturns401() {
+        given().when().get("/api/auth/me").then().statusCode(401);
+    }
+
+    @Test
+    void registerValidationFails() {
+        given().contentType("application/json")
+                .body(Map.of("name", "", "email", "nije-email", "password", "123"))
+                .when().post("/api/auth/register")
+                .then().statusCode(400);
+    }
+}

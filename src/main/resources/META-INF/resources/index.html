@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moje finansije - Personal Finance Manager</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%23059669'/><text x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>M</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/landing.css">
+</head>
+<body>
+<div id="app">
+    <!-- Landing / auth stranica -->
+    <div id="auth-screen" class="auth-screen hidden">
+
+        <header class="lp-nav">
+            <div class="lp-nav-inner">
+                <div class="lp-nav-brand">
+                    <div class="brand-mark">
+                        <svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                    </div>
+                    Moje finansije
+                </div>
+                <nav class="lp-nav-links" aria-label="Sekcije">
+                    <button class="lp-nav-link lp-scroll" data-target="lp-demo" type="button">Mogućnosti</button>
+                    <button class="lp-nav-link lp-scroll" data-target="lp-kako" type="button">Kako radi</button>
+                    <button class="lp-nav-link lp-scroll" data-target="lp-brojke" type="button">Brojke</button>
+                </nav>
+                <div class="lp-nav-actions">
+                    <button id="nav-open" class="btn btn-mint" type="button">Otvori nalog</button>
+                </div>
+            </div>
+        </header>
+
+        <section class="lp-hero">
+            <div class="aurora aurora-1"></div>
+            <div class="aurora aurora-2"></div>
+            <svg class="lp-hero-line" viewBox="0 0 1200 320" preserveAspectRatio="none" aria-hidden="true">
+                <defs>
+                    <linearGradient id="lhl-fill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#3fe08f" stop-opacity=".16"/>
+                        <stop offset="100%" stop-color="#3fe08f" stop-opacity="0"/>
+                    </linearGradient>
+                </defs>
+                <path class="lhl-area" d="M0,262 C150,242 220,182 340,192 C460,202 520,122 660,132 C800,142 860,72 1000,62 C1080,56 1140,42 1200,30 L1200,320 L0,320 Z" fill="url(#lhl-fill)"/>
+                <path class="lhl-line" pathLength="1" d="M0,262 C150,242 220,182 340,192 C460,202 520,122 660,132 C800,142 860,72 1000,62 C1080,56 1140,42 1200,30"/>
+            </svg>
+            <div class="lp-hero-inner">
+                <div class="lp-hero-copy">
+                    <span class="lp-eyebrow">Lični finansijski menadžer</span>
+                    <h1 class="lp-h1">Znajte gdje ide <span class="hl">svaki euro</span>.</h1>
+                    <p class="lp-sub">Računi, transakcije i budžeti na jednom mjestu — bez tabela
+                        u Excelu i računa po džepovima. Otvorite nalog za minut.</p>
+                    <div class="lp-cta">
+                        <button id="cta-demo" class="btn btn-mint btn-lg" type="button">
+                            Probaj demo odmah
+                            <svg class="btn-arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                        </button>
+                        <button id="cta-features" class="btn btn-outline-light btn-lg lp-scroll" data-target="lp-demo" type="button">Pogledaj mogućnosti</button>
+                    </div>
+                    <div class="lp-stats">
+                        <div><b data-count="11490" data-suffix=" EUR">0</b><span>praćeno u demo nalogu</span></div>
+                        <div><b data-count="74">0</b><span>transakcija</span></div>
+                        <div><b data-count="3">0</b><span>računa</span></div>
+                    </div>
+                </div>
+
+                <div class="auth-card" id="auth-panel">
+                    <div class="auth-forms">
+                        <div class="auth-form-head">
+                            <h2>Dobrodošli</h2>
+                            <p>Prijavite se na svoj nalog ili kreirajte novi</p>
+                        </div>
+                        <div class="auth-tabs">
+                            <button id="tab-login" class="auth-tab active" type="button">Prijava</button>
+                            <button id="tab-register" class="auth-tab" type="button">Registracija</button>
+                        </div>
+
+                        <form id="login-form" class="auth-form">
+                            <label>Email
+                                <input type="email" name="email" required autocomplete="email" placeholder="npr. demo@pfm.me">
+                            </label>
+                            <label>Lozinka
+                                <input type="password" name="password" required autocomplete="current-password" placeholder="Vaša lozinka">
+                            </label>
+                            <button type="submit" class="btn btn-primary btn-block">Prijavi se</button>
+                            <p class="auth-hint">Demo nalog: <strong>demo@pfm.me</strong> / <strong>demo123</strong></p>
+                        </form>
+
+                        <form id="register-form" class="auth-form hidden">
+                            <label>Ime i prezime
+                                <input type="text" name="name" required placeholder="Vaše ime">
+                            </label>
+                            <label>Email
+                                <input type="email" name="email" required autocomplete="email" placeholder="ime@primjer.me">
+                            </label>
+                            <label>Lozinka
+                                <input type="password" name="password" required minlength="6" autocomplete="new-password" placeholder="najmanje 6 znakova">
+                            </label>
+                            <button type="submit" class="btn btn-primary btn-block">Kreiraj nalog</button>
+                        </form>
+
+                        <div id="auth-error" class="form-error hidden"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="lp-marquee" aria-hidden="true">
+            <span class="lp-marquee-label">Kursna lista EUR</span>
+            <div class="lp-marquee-track" id="marquee-track">
+                <span class="lp-marquee-item cur">USD 1.14</span>
+                <span class="lp-marquee-item cur">GBP 0.87</span>
+                <span class="lp-marquee-item cur">CHF 0.93</span>
+                <span class="lp-marquee-item cur">JPY 172.4</span>
+                <span class="lp-marquee-item cur">CAD 1.59</span>
+                <span class="lp-marquee-item cur">AUD 1.77</span>
+                <span class="lp-marquee-item cur">SEK 11.02</span>
+                <span class="lp-marquee-item cur">NOK 11.61</span>
+                <span class="lp-marquee-item cur">PLN 4.24</span>
+                <span class="lp-marquee-item cur">CZK 24.28</span>
+                <span class="lp-marquee-item cur">DKK 7.46</span>
+                <span class="lp-marquee-item cur">TRY 47.80</span>
+            </div>
+        </div>
+
+        <section class="lp-video" id="lp-video">
+            <div class="lp-section-head reveal">
+                <h2>Pogledajte kako radi</h2>
+                <p>Pravi snimak aplikacije — od pregleda i transakcija do budžeta, za pola minute.</p>
+            </div>
+            <div class="lp-browser reveal">
+                <div class="lp-browser-bar">
+                    <span class="lb-dot" style="background:#ff5f57"></span>
+                    <span class="lb-dot" style="background:#febc2e"></span>
+                    <span class="lb-dot" style="background:#28c840"></span>
+                    <span class="lb-url">mojefinansije.me</span>
+                </div>
+                <div class="lp-video-wrap">
+                    <video id="demo-video" src="img/demo.mp4" poster="img/demo-poster.jpg"
+                           autoplay muted loop playsinline preload="metadata"
+                           aria-label="Demonstracija aplikacije Moje finansije"></video>
+                    <button id="demo-sound" class="lp-sound" type="button">
+                        <svg class="ico ico-sm" viewBox="0 0 24 24"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/></svg>
+                        <span>Uključi zvuk</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="lp-light" id="lp-demo">
+            <div class="lp-section-head reveal">
+                <h2>Vaše finansije, jasne na prvi pogled</h2>
+                <p>Ovako izgleda aplikacija iznutra — pravi pregled, pravi grafikoni, pravi podaci.</p>
+            </div>
+            <div class="lp-collage reveal">
+                <div class="app-mock" id="lp-chart">
+                    <div class="app-mock-label">Tok novca — zadnjih 6 mjeseci <span class="lp-hint">pređite mišem preko stubića</span></div>
+                    <div class="app-mock-value">11.490<small>,50 EUR ukupno stanje</small></div>
+                    <div class="mock-bars">
+                        <div class="mock-group" style="--hi:.52;--he:.34;--d:.10s" data-m="Februar" data-i="1.850" data-e="1.210"><i></i><b></b></div>
+                        <div class="mock-group" style="--hi:.66;--he:.29;--d:.18s" data-m="Mart" data-i="2.340" data-e="1.030"><i></i><b></b></div>
+                        <div class="mock-group" style="--hi:.48;--he:.42;--d:.26s" data-m="April" data-i="1.700" data-e="1.490"><i></i><b></b></div>
+                        <div class="mock-group" style="--hi:.78;--he:.31;--d:.34s" data-m="Maj" data-i="2.770" data-e="1.100"><i></i><b></b></div>
+                        <div class="mock-group" style="--hi:.62;--he:.47;--d:.42s" data-m="Jun" data-i="2.200" data-e="1.670"><i></i><b></b></div>
+                        <div class="mock-group" style="--hi:.90;--he:.36;--d:.50s" data-m="Jul" data-i="3.190" data-e="1.280"><i></i><b></b></div>
+                    </div>
+                    <div class="mock-months"><span>feb</span><span>mar</span><span>apr</span><span>maj</span><span>jun</span><span>jul</span></div>
+                    <div class="mock-legend">
+                        <span><i style="background:#059669"></i>Prihodi</span>
+                        <span><i style="background:#e34948"></i>Rashodi</span>
+                    </div>
+                </div>
+                <div class="lp-collage-side">
+                    <div class="app-mock">
+                        <div class="app-mock-label">Budžeti ovaj mjesec</div>
+                        <div class="mock-budget-row">
+                            <div class="mock-budget-head"><span>Hrana</span><span>317 / 450 EUR</span></div>
+                            <div class="mock-track"><div class="mock-fill" style="--w:70%"></div></div>
+                        </div>
+                        <div class="mock-budget-row">
+                            <div class="mock-budget-head"><span>Zabava i kupovina</span><span>211 / 250 EUR</span></div>
+                            <div class="mock-track"><div class="mock-fill warn" style="--w:84%"></div></div>
+                        </div>
+                    </div>
+                    <div class="app-mock">
+                        <div class="app-mock-label" style="margin-bottom:6px">Posljednje transakcije</div>
+                        <div class="mock-tx">
+                            <span class="mt-ico">💼</span>
+                            <span class="mt-name"><b>Mjesečna plata</b><span>Tekući račun</span></span>
+                            <span class="mt-amount up">+2.600,00</span>
+                        </div>
+                        <div class="mock-tx">
+                            <span class="mt-ico">🏠</span>
+                            <span class="mt-name"><b>Kirija za stan</b><span>Tekući račun</span></span>
+                            <span class="mt-amount down">-650,00</span>
+                        </div>
+                        <div class="mock-tx">
+                            <span class="mt-ico">🍔</span>
+                            <span class="mt-name"><b>Namirnice</b><span>Gotovina</span></span>
+                            <span class="mt-amount down">-95,50</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lp-bento">
+                <div class="lp-feature lp-b-wide reveal">
+                    <div class="lp-feature-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+                    <h3>Budžeti koji čuvaju</h3>
+                    <p>Postavite mjesečni limit po kategorijama i vidite upozorenje prije nego što ga probijete.</p>
+                    <div class="lp-b-demo">
+                        <div class="mock-budget-row">
+                            <div class="mock-budget-head"><span>Hrana</span><span id="bd-label"><b>317</b> / 450 EUR</span></div>
+                            <div class="mock-track"><div class="mock-fill" id="bd-fill" style="--w:70%"></div></div>
+                        </div>
+                        <div class="lp-slider-row">
+                            <label for="bd-range">Probajte — pomjerite limit i budžet reaguje odmah:</label>
+                            <input type="range" id="bd-range" min="320" max="700" step="10" value="450" aria-label="Mjesečni limit za hranu">
+                        </div>
+                    </div>
+                </div>
+                <div class="lp-feature reveal">
+                    <div class="lp-feature-ico"><svg viewBox="0 0 24 24"><path d="M12 3v3"/><path d="m6.6 6.6 2.1 2.1"/><path d="M3 12h3"/><path d="M12 18v3"/><path d="m17.4 6.6-2.1 2.1"/><path d="M18 12h3"/><circle cx="12" cy="12" r="4"/></svg></div>
+                    <h3>Kursevi i alati</h3>
+                    <p>Konverter valuta sa kursevima Evropske centralne banke — direktno u aplikaciji.</p>
+                </div>
+                <div class="lp-feature lp-b-wide reveal">
+                    <div class="lp-b-split">
+                        <div>
+                            <div class="lp-feature-ico"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></div>
+                            <h3>Svi računi na okupu</h3>
+                            <p>Tekući, štednja, gotovina i kartice — stanje se ažurira samo sa svakom transakcijom.</p>
+                        </div>
+                        <div id="wallet-anim" class="lp-b-anim lp-b-anim-lg" aria-hidden="true"></div>
+                    </div>
+                </div>
+                <div class="lp-feature reveal">
+                    <div class="lp-feature-ico"><svg viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 16h8"/><path d="M7 11h12"/><path d="M7 6h3"/></svg></div>
+                    <h3>Izvještaji koji se razumiju</h3>
+                    <p>Rashodi po kategorijama i tok novca — bez čitanja tabela.</p>
+                    <div class="lp-b-donut-row">
+                        <div class="lp-b-donut" aria-hidden="true"></div>
+                        <div class="lp-b-donut-legend">
+                            <span><i style="background:#2a78d6"></i>Hrana</span>
+                            <span><i style="background:#1baf7a"></i>Stanovanje</span>
+                            <span><i style="background:#eda100"></i>Prevoz</span>
+                            <span><i style="background:#e87ba4"></i>Ostalo</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="lp-photo">
+            <div class="lp-photo-inner">
+                <div class="lp-photo-copy reveal">
+                    <h2>Vi samo plaćajte — <br>evidencija je naša briga</h2>
+                    <p>Večera, kafa ili mjesečna kirija: upišite transakciju za par sekundi,
+                        priložite račun i uvijek znajte koliko vam je ostalo do kraja mjeseca.</p>
+                    <ul class="lp-photo-list">
+                        <li>
+                            <span class="check"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span>
+                            Upis transakcije za deset sekundi
+                        </li>
+                        <li>
+                            <span class="check"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span>
+                            Račun ili faktura priloženi uz svaki trošak
+                        </li>
+                        <li>
+                            <span class="check"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span>
+                            Budžet se ažurira istog trenutka
+                        </li>
+                    </ul>
+                </div>
+                <div class="lp-photo-frame reveal">
+                    <img src="img/placanje.jpg" alt="Beskontaktno plaćanje telefonom u restoranu" loading="lazy" width="1600" height="1200">
+                </div>
+            </div>
+        </section>
+
+        <section class="lp-steps" id="lp-kako">
+            <div class="lp-section-head reveal">
+                <h2>Do jasnih finansija u tri koraka</h2>
+                <p>Bez podešavanja, bez uputstava — nalog je spreman za korištenje čim ga otvorite.</p>
+            </div>
+            <div class="lp-steps-row">
+                <div class="lp-step reveal">
+                    <span class="lp-step-num">1</span>
+                    <h3>Otvorite nalog</h3>
+                    <p>Ime, email i lozinka — i to je to. Dvanaest kategorija vas već čeka.</p>
+                </div>
+                <div class="lp-step reveal" style="transition-delay:.12s">
+                    <span class="lp-step-num">2</span>
+                    <h3>Upisujte troškove</h3>
+                    <p>Iznos, kategorija, račun u prilogu. Deset sekundi po transakciji.</p>
+                </div>
+                <div class="lp-step reveal" style="transition-delay:.24s">
+                    <span class="lp-step-num">3</span>
+                    <h3>Gledajte kuda ide</h3>
+                    <p>Dashboard i budžeti pokazuju kuda novac odlazi — i gdje može da ostane.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="lp-numbers" id="lp-brojke">
+            <div class="lp-numbers-head reveal">
+                <h2>Aplikacija u brojkama</h2>
+            </div>
+            <div class="lp-numbers-inner">
+                <div class="lp-number reveal">
+                    <span class="lp-number-ico"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span>
+                    <b data-count="4">0</b><span>tipa računa</span>
+                </div>
+                <div class="lp-number reveal">
+                    <span class="lp-number-ico"><svg viewBox="0 0 24 24"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg></span>
+                    <b data-count="12">0</b><span>kategorija odmah spremnih</span>
+                </div>
+                <div class="lp-number reveal">
+                    <span class="lp-number-ico"><svg viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 16h8"/><path d="M7 11h12"/><path d="M7 6h3"/></svg></span>
+                    <b data-count="6">0</b><span>mjeseci grafikona</span>
+                </div>
+                <div class="lp-number reveal">
+                    <span class="lp-number-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg></span>
+                    <b data-count="0" data-suffix=" €">0 €</b><span>naknada, zauvijek</span>
+                </div>
+            </div>
+        </section>
+
+        <footer class="lp-footer">
+            <div class="lp-footer-inner">
+                <div class="lp-footer-brand">
+                    <div class="brand-mark">
+                        <svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                    </div>
+                    Moje finansije
+                </div>
+                <nav class="lp-foot-links" aria-label="Sekcije">
+                    <button class="lp-foot-link lp-scroll" data-target="lp-demo" type="button">Mogućnosti</button>
+                    <button class="lp-foot-link lp-scroll" data-target="lp-kako" type="button">Kako radi</button>
+                    <button class="lp-foot-link lp-scroll" data-target="lp-brojke" type="button">Brojke</button>
+                </nav>
+                <span>Vaši podaci ostaju vaši — bez reklama i bez dijeljenja. © 2026</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Glavni layout -->
+    <div id="main-layout" class="layout hidden">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-mark">
+                    <svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                </div>
+                <div class="sidebar-title"><b>Moje finansije</b><span>Lični menadžer</span></div>
+            </div>
+            <nav class="sidebar-nav" id="nav">
+                <div class="nav-label">Pregled</div>
+                <a href="#/dashboard" data-route="dashboard">
+                    <svg class="ico" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                    Pregled
+                </a>
+                <a href="#/transactions" data-route="transactions">
+                    <svg class="ico" viewBox="0 0 24 24"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
+                    Transakcije
+                </a>
+                <a href="#/accounts" data-route="accounts">
+                    <svg class="ico" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                    Računi
+                </a>
+                <div class="nav-label">Planiranje</div>
+                <a href="#/budgets" data-route="budgets">
+                    <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                    Budžeti
+                </a>
+                <a href="#/categories" data-route="categories">
+                    <svg class="ico" viewBox="0 0 24 24"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>
+                    Kategorije
+                </a>
+                <div class="nav-label">Ostalo</div>
+                <a href="#/tools" data-route="tools">
+                    <svg class="ico" viewBox="0 0 24 24"><path d="M12 3v3"/><path d="m6.6 6.6 2.1 2.1"/><path d="M3 12h3"/><path d="M12 18v3"/><path d="m17.4 6.6-2.1 2.1"/><path d="M18 12h3"/><circle cx="12" cy="12" r="4"/></svg>
+                    Alati
+                </a>
+                <a href="#/profile" data-route="profile">
+                    <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+                    Profil
+                </a>
+                <a href="#/admin" data-route="admin" id="nav-admin" class="hidden">
+                    <svg class="ico" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+                    Administracija
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="sidebar-user">
+                    <div class="avatar" id="user-avatar">?</div>
+                    <div class="sidebar-user-info">
+                        <span id="user-name">-</span>
+                        <span id="user-email" class="muted">-</span>
+                    </div>
+                </div>
+                <button id="logout-btn" class="btn btn-ghost btn-block" type="button">
+                    <svg class="ico ico-sm" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+                    Odjava
+                </button>
+            </div>
+        </aside>
+        <main class="content">
+            <div id="view" class="view"></div>
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal-backdrop" class="modal-backdrop hidden">
+        <div class="modal" id="modal">
+            <div class="modal-header">
+                <h2 id="modal-title">Naslov</h2>
+                <button class="modal-close" id="modal-close" type="button" aria-label="Zatvori">
+                    <svg class="ico ico-sm" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Toast poruke -->
+    <div id="toasts" class="toasts"></div>
+</div>
+<script src="js/vendor/lottie_light.min.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
