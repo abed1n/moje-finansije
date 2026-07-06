@@ -52,7 +52,19 @@ const ICONS = {
     wallet: '<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>',
     trendUp: '<path d="M16 7h6v6"/><path d="m22 7-8.5 8.5-5-5L2 17"/>',
     trendDown: '<path d="M16 17h6v-6"/><path d="m22 17-8.5-8.5-5 5L2 7"/>',
-    scale: '<path d="M12 3v18"/><path d="M8 21h8"/><path d="m5 7 3 7a3 3 0 0 1-6 0z"/><path d="m19 7 3 7a3 3 0 0 1-6 0z"/><path d="M4 7h16"/>'
+    scale: '<path d="M12 3v18"/><path d="M8 21h8"/><path d="m5 7 3 7a3 3 0 0 1-6 0z"/><path d="m19 7 3 7a3 3 0 0 1-6 0z"/><path d="M4 7h16"/>',
+    repeat: '<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
+    download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
+    moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+    chevLeft: '<path d="m15 18-6-6 6-6"/>',
+    chevRight: '<path d="m9 18 6-6-6-6"/>',
+    check: '<path d="M20 6 9 17l-5-5"/>',
+    tagIco: '<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>',
+    tools: '<path d="M12 3v3"/><path d="m6.6 6.6 2.1 2.1"/><path d="M3 12h3"/><path d="M12 18v3"/><path d="m17.4 6.6-2.1 2.1"/><path d="M18 12h3"/><circle cx="12" cy="12" r="4"/>',
+    user: '<circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>',
+    shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+    logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>'
 };
 
 function icon(name, cls = 'ico') {
@@ -112,6 +124,68 @@ $('#modal-backdrop').addEventListener('click', e => {
     if (e.target === $('#modal-backdrop')) closeModal();
 });
 
+$('#bell-btn').addEventListener('click', openAlertsModal);
+$('#theme-btn').addEventListener('click', toggleTheme);
+$('#mobile-more').addEventListener('click', openMoreSheet);
+
+// Upozorenja: budzeti koji su presli 80% limita
+let budgetAlerts = [];
+
+async function refreshAlerts() {
+    if (!state.token) return;
+    try {
+        const budgets = await api('/api/budgets');
+        budgetAlerts = budgets
+            .filter(b => b.percentUsed >= 80)
+            .sort((a, b) => b.percentUsed - a.percentUsed);
+        const badge = $('#bell-badge');
+        badge.textContent = budgetAlerts.length;
+        badge.classList.toggle('hidden', budgetAlerts.length === 0);
+    } catch (ignored) { /* upozorenja nisu kriticna za rad aplikacije */ }
+}
+
+function openAlertsModal() {
+    const rows = budgetAlerts.map(b => {
+        const over = b.percentUsed >= 100;
+        return `<div class="alert-row">
+            <div class="alert-head">
+                <strong>${esc(b.name)}</strong>
+                <span class="pct ${over ? 'over' : 'warn'}">${b.percentUsed}%</span>
+            </div>
+            <div class="budget-bar"><div class="budget-bar-fill ${over ? 'over' : 'warn'}" style="width:${Math.min(b.percentUsed, 100)}%"></div></div>
+            <div class="alert-sub">${fmtMoney(b.spent)} od ${fmtMoney(b.limitAmount)}${over ? ' — limit je probijen' : ''}</div>
+        </div>`;
+    }).join('');
+
+    const body = openModal('Upozorenja za budžete', budgetAlerts.length
+        ? rows + `<div class="form-actions"><button class="btn btn-secondary" id="alerts-goto" type="button">Otvori budžete</button></div>`
+        : `<div class="alert-ok"><svg class="ico" viewBox="0 0 24 24">${ICONS.check}</svg>Svi budžeti su u zelenom — nijedan nije prešao 80% limita.</div>`);
+
+    const goto = $('#alerts-goto', body);
+    if (goto) goto.addEventListener('click', () => { closeModal(); location.hash = '#/budgets'; });
+}
+
+// "Jos" sheet na mobilnoj navigaciji
+function openMoreSheet() {
+    const isDark = localStorage.getItem(THEME_KEY) === 'dark';
+    const body = openModal('Još', `<div class="more-grid">
+        <button class="more-item" data-nav="categories" type="button">${icon('tagIco')}Kategorije</button>
+        <button class="more-item" data-nav="tools" type="button">${icon('tools')}Alati</button>
+        <button class="more-item" data-nav="profile" type="button">${icon('user')}Profil</button>
+        ${state.user && state.user.role === 'ADMIN'
+            ? `<button class="more-item" data-nav="admin" type="button">${icon('shield')}Administracija</button>` : ''}
+        <button class="more-item" id="more-theme" type="button">${icon(isDark ? 'sun' : 'moon')}${isDark ? 'Svijetla tema' : 'Tamna tema'}</button>
+        <button class="more-item danger" id="more-logout" type="button">${icon('logout')}Odjava</button>
+    </div>`);
+
+    $$('.more-item[data-nav]', body).forEach(btn => btn.addEventListener('click', () => {
+        closeModal();
+        location.hash = '#/' + btn.dataset.nav;
+    }));
+    $('#more-theme', body).addEventListener('click', () => { closeModal(); toggleTheme(); });
+    $('#more-logout', body).addEventListener('click', () => { closeModal(); logout(); });
+}
+
 // Autentifikacija
 function saveAuth(auth) {
     state.token = auth.token;
@@ -133,6 +207,7 @@ let landingReady = false;
 function showAuth() {
     $('#main-layout').classList.add('hidden');
     $('#auth-screen').classList.remove('hidden');
+    applyTheme(null); // landing ima svoj fiksni dizajn, tamna tema vazi samo u aplikaciji
     if (!landingReady) {
         landingReady = true;
         initLanding();
@@ -292,6 +367,8 @@ function initLanding() {
 function showApp() {
     $('#auth-screen').classList.add('hidden');
     $('#main-layout').classList.remove('hidden');
+    applyTheme(localStorage.getItem(THEME_KEY));
+    refreshAlerts();
     const user = state.user;
     $('#user-name').textContent = user.name;
     $('#user-email').textContent = user.email;
@@ -363,12 +440,36 @@ const routes = {
     admin: renderAdmin
 };
 
+// Skeleton koji priblizno oponasa raspored stranice dok se podaci ucitavaju
+function skeletonFor(routeName) {
+    const line = (width, height = 12) =>
+        `<div class="sk sk-line" style="width:${width};height:${height}px"></div>`;
+    const gap = height => `<div style="height:${height}px"></div>`;
+
+    if (routeName === 'dashboard') {
+        const statCard = `<div class="card stat-card">${line('55%')}${gap(12)}${line('80%', 24)}${gap(8)}${line('40%', 10)}</div>`;
+        return `<div class="stats-grid">${statCard.repeat(4)}</div>
+            <div class="dash-grid">
+                <div class="card"><div class="sk sk-block" style="min-height:236px"></div></div>
+                <div class="card"><div class="sk sk-block" style="min-height:236px"></div></div>
+            </div>`;
+    }
+    if (routeName === 'accounts' || routeName === 'budgets') {
+        const card = `<div class="card">${line('35%', 10)}${gap(10)}${line('60%', 18)}${gap(14)}${line('85%', 22)}${gap(12)}${line('50%')}</div>`;
+        return `<div class="accounts-grid">${card.repeat(3)}</div>`;
+    }
+    const row = `<div style="display:flex;align-items:center;gap:16px;padding:13px 0">
+        ${line('70px')}${line('26%')}${line('16%')}<span style="flex:1"></span>${line('80px')}</div>`;
+    return `<div class="card">${line('30%', 16)}${gap(18)}${row.repeat(6)}</div>`;
+}
+
 function route() {
     if (!state.token) return;
     const name = (location.hash.replace('#/', '') || 'dashboard').split('?')[0];
     const render = routes[name] || renderDashboard;
-    $$('#nav a').forEach(a => a.classList.toggle('active', a.dataset.route === name));
-    $('#view').innerHTML = '<div class="loading-state"><span class="spinner"></span>Učitavanje...</div>';
+    $$('#nav a, #mobile-nav a').forEach(a => a.classList.toggle('active', a.dataset.route === name));
+    $('#view').innerHTML = skeletonFor(name);
+    refreshAlerts();
     render().catch(err => {
         $('#view').innerHTML = `<div class="empty-state"><span class="emoji">⚠️</span><p>${esc(err.message)}</p></div>`;
     });
@@ -383,10 +484,36 @@ async function loadRefs() {
     ]);
 }
 
+// Tema (svijetla/tamna) — cuva se u localStorage, vazi samo unutar aplikacije
+const THEME_KEY = 'pfm_theme';
+
+function applyTheme(theme) {
+    if (theme === 'dark') {
+        document.documentElement.dataset.theme = 'dark';
+    } else {
+        delete document.documentElement.dataset.theme;
+    }
+    const themeIcon = $('#theme-icon');
+    const themeLabel = $('#theme-label');
+    if (themeIcon) themeIcon.innerHTML = theme === 'dark' ? ICONS.sun : ICONS.moon;
+    if (themeLabel) themeLabel.textContent = theme === 'dark' ? 'Svijetla tema' : 'Tamna tema';
+}
+
+function toggleTheme() {
+    const next = localStorage.getItem(THEME_KEY) === 'dark' ? 'light' : 'dark';
+    localStorage.setItem(THEME_KEY, next);
+    applyTheme(next);
+    route(); // grafikoni se ponovo iscrtaju u bojama teme
+}
+
 // SVG grafikoni
-// Boje serija su validirane dataviz validatorom (CVD, kontrast):
-// prihodi #059669, rashodi #e34948
-const CHART = { income: '#059669', expense: '#e34948' };
+// Boje serija su validirane dataviz validatorom za obje podloge (CVD, kontrast):
+// svijetla: #059669 / #e34948 · tamna: #199e70 / #e66767
+function chartColors() {
+    return document.documentElement.dataset.theme === 'dark'
+        ? { income: '#199e70', expense: '#e66767' }
+        : { income: '#059669', expense: '#e34948' };
+}
 
 function svgDoughnut(items) {
     const total = items.reduce((sum, it) => sum + Number(it.amount), 0);
@@ -412,8 +539,8 @@ function svgDoughnut(items) {
     return `<div class="doughnut-wrap">
         <svg viewBox="0 0 42 42" width="168" height="168" style="flex-shrink:0" role="img" aria-label="Rashodi po kategorijama">
             ${circles}
-            <text x="21" y="20.2" text-anchor="middle" font-size="5.4" font-weight="800" letter-spacing="-.1" fill="#0c111d">${Number(total).toLocaleString('sr-ME', { maximumFractionDigits: 0 })}</text>
-            <text x="21" y="25.6" text-anchor="middle" font-size="2.5" font-weight="500" fill="#8b94a3">EUR OVAJ MJESEC</text>
+            <text x="21" y="20.2" text-anchor="middle" font-size="5.4" font-weight="800" letter-spacing="-.1" style="fill:var(--text)">${Number(total).toLocaleString('sr-ME', { maximumFractionDigits: 0 })}</text>
+            <text x="21" y="25.6" text-anchor="middle" font-size="2.5" font-weight="500" style="fill:var(--text-3)">EUR OVAJ MJESEC</text>
         </svg>
         <div class="chart-legend">${legend}</div>
     </div>`;
@@ -434,6 +561,7 @@ function niceCeil(value) {
 }
 
 function svgBars(flow) {
+    const colors = chartColors();
     const rawMax = Math.max(...flow.map(f => Math.max(Number(f.income), Number(f.expense))), 1);
     const max = niceCeil(rawMax);
     const W = 560, H = 236, padL = 46, padR = 10, padT = 10, padB = 26;
@@ -446,8 +574,8 @@ function svgBars(flow) {
     const grid = ticks.map(t => {
         const y = baseline - t * chartH;
         const label = (max * t).toLocaleString('sr-ME', { maximumFractionDigits: 0 });
-        return `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="${t === 0 ? '#c9cfd9' : '#eceff4'}"></line>
-            <text x="${padL - 8}" y="${y + 3.5}" text-anchor="end" font-size="10.5" fill="#8b94a3" style="font-variant-numeric:tabular-nums">${label}</text>`;
+        return `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" style="stroke:${t === 0 ? 'var(--chart-axis)' : 'var(--chart-grid)'}"></line>
+            <text x="${padL - 8}" y="${y + 3.5}" text-anchor="end" font-size="10.5" style="fill:var(--text-3);font-variant-numeric:tabular-nums">${label}</text>`;
     }).join('');
 
     const bars = flow.map((f, i) => {
@@ -456,9 +584,9 @@ function svgBars(flow) {
         const hExp = Math.max(Number(f.expense) / max * chartH, Number(f.expense) > 0 ? 2 : 0);
         return `<g class="bar-group" data-i="${i}">
             <rect class="bar-hit" x="${padL + i * groupW}" y="${padT}" width="${groupW}" height="${chartH}" fill="transparent"></rect>
-            ${hInc ? `<path class="bar" d="${barPath(cx - barW - 1, baseline - hInc, barW, hInc, 4)}" fill="${CHART.income}"></path>` : ''}
-            ${hExp ? `<path class="bar" d="${barPath(cx + 1, baseline - hExp, barW, hExp, 4)}" fill="${CHART.expense}"></path>` : ''}
-            <text x="${cx}" y="${H - 8}" text-anchor="middle" font-size="11" fill="#8b94a3">${esc(fmtMonth(f.month))}</text>
+            ${hInc ? `<path class="bar" d="${barPath(cx - barW - 1, baseline - hInc, barW, hInc, 4)}" fill="${colors.income}"></path>` : ''}
+            ${hExp ? `<path class="bar" d="${barPath(cx + 1, baseline - hExp, barW, hExp, 4)}" fill="${colors.expense}"></path>` : ''}
+            <text x="${cx}" y="${H - 8}" text-anchor="middle" font-size="11" style="fill:var(--text-3)">${esc(fmtMonth(f.month))}</text>
         </g>`;
     }).join('');
 
@@ -474,11 +602,12 @@ function attachBarTips(card, flow) {
     card.appendChild(tip);
     card.querySelectorAll('.bar-group').forEach(group => {
         group.addEventListener('mouseenter', () => {
+            const colors = chartColors();
             const f = flow[Number(group.dataset.i)];
             tip.innerHTML = `
                 <div class="tip-title">${esc(fmtMonth(f.month))}</div>
-                <div class="tip-row"><span class="swatch" style="background:${CHART.income}"></span>Prihodi <b>+${fmtMoney(f.income)}</b></div>
-                <div class="tip-row"><span class="swatch" style="background:${CHART.expense}"></span>Rashodi <b>-${fmtMoney(f.expense)}</b></div>`;
+                <div class="tip-row"><span class="swatch" style="background:${colors.income}"></span>Prihodi <b>+${fmtMoney(f.income)}</b></div>
+                <div class="tip-row"><span class="swatch" style="background:${colors.expense}"></span>Rashodi <b>-${fmtMoney(f.expense)}</b></div>`;
             tip.classList.add('show');
         });
         group.addEventListener('mousemove', e => {
@@ -551,8 +680,8 @@ async function renderDashboard() {
                 <div class="card-head">
                     <h3>Tok novca — zadnjih 6 mjeseci</h3>
                     <div class="chart-legend-top">
-                        <span class="legend-item"><span class="swatch" style="background:${CHART.income}"></span>Prihodi</span>
-                        <span class="legend-item"><span class="swatch" style="background:${CHART.expense}"></span>Rashodi</span>
+                        <span class="legend-item"><span class="swatch" style="background:${chartColors().income}"></span>Prihodi</span>
+                        <span class="legend-item"><span class="swatch" style="background:${chartColors().expense}"></span>Rashodi</span>
                     </div>
                 </div>
                 ${svgBars(d.monthlyFlow)}
@@ -586,7 +715,11 @@ async function renderTransactions() {
     $('#view').innerHTML = `
         <div class="page-header">
             <div><h1>Transakcije</h1><p>Svi prihodi i rashodi</p></div>
-            <button class="btn btn-primary" id="add-tx">${icon('plus', 'ico ico-sm')} Nova transakcija</button>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <button class="btn btn-secondary" id="tx-recurring" type="button">${icon('repeat', 'ico ico-sm')} Ponavljajuće</button>
+                <button class="btn btn-secondary" id="tx-export" type="button">${icon('download', 'ico ico-sm')} Izvezi CSV</button>
+                <button class="btn btn-primary" id="add-tx" type="button">${icon('plus', 'ico ico-sm')} Nova transakcija</button>
+            </div>
         </div>
         <div class="card">
             <div class="filters">
@@ -610,22 +743,43 @@ async function renderTransactions() {
             <div id="tx-table"></div>
         </div>`;
 
-    async function loadTable() {
-        const params = new URLSearchParams();
-        if ($('#f-account').value) params.set('accountId', $('#f-account').value);
-        if ($('#f-category').value) params.set('categoryId', $('#f-category').value);
-        if ($('#f-type').value) params.set('type', $('#f-type').value);
-        if ($('#f-from').value) params.set('from', $('#f-from').value);
-        if ($('#f-to').value) params.set('to', $('#f-to').value);
-        if ($('#f-search').value) params.set('search', $('#f-search').value);
-        const transactions = await api('/api/transactions?' + params);
-        if (!transactions.length) {
+    const PAGE_SIZE = 20;
+    let allTransactions = [];
+    let sortKey = 'date';
+    let sortDir = 'desc';
+    let page = 1;
+
+    function sorted() {
+        const dir = sortDir === 'asc' ? 1 : -1;
+        return [...allTransactions].sort((a, b) => {
+            const cmp = sortKey === 'amount'
+                ? Number(a.amount) - Number(b.amount)
+                : (a.date === b.date ? a.id - b.id : (a.date < b.date ? -1 : 1));
+            return cmp * dir;
+        });
+    }
+
+    function renderTable() {
+        if (!allTransactions.length) {
             $('#tx-table').innerHTML = `<div class="empty-state"><span class="emoji">🧾</span><p>Nema transakcija za zadate filtere.</p></div>`;
             return;
         }
+        const rows = sorted();
+        const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+        page = Math.min(page, pages);
+        const start = (page - 1) * PAGE_SIZE;
+        const visible = rows.slice(start, start + PAGE_SIZE);
+        const arrow = key => sortKey === key
+            ? `<span class="sort-arrow">${sortDir === 'asc' ? '▲' : '▼'}</span>` : '';
+
         $('#tx-table').innerHTML = `<div class="table-wrap"><table>
-            <thead><tr><th>Datum</th><th>Opis</th><th>Kategorija</th><th>Račun</th><th style="text-align:right">Iznos</th><th></th></tr></thead>
-            <tbody>${transactions.map(t => `
+            <thead><tr>
+                <th class="sortable" data-sort="date">Datum${arrow('date')}</th>
+                <th>Opis</th><th>Kategorija</th><th>Račun</th>
+                <th class="sortable" data-sort="amount" style="text-align:right">Iznos${arrow('amount')}</th>
+                <th></th>
+            </tr></thead>
+            <tbody>${visible.map(t => `
                 <tr data-id="${t.id}">
                     <td>${fmtDate(t.date)}</td>
                     <td>${esc(t.description || '-')}
@@ -639,11 +793,34 @@ async function renderTransactions() {
                         <button class="icon-btn danger" data-act="delete" title="Obriši">${icon('trash')}</button>
                     </div></td>
                 </tr>`).join('')}</tbody>
-        </table></div>`;
+        </table></div>
+        ${rows.length > PAGE_SIZE ? `<div class="pager">
+            <span class="pager-info">Prikazano ${start + 1}–${start + visible.length} od ${rows.length}</span>
+            <div class="pager-controls">
+                <button class="icon-btn" id="pg-prev" type="button" ${page === 1 ? 'disabled' : ''} aria-label="Prethodna strana">${icon('chevLeft')}</button>
+                <span class="pager-page">${page} / ${pages}</span>
+                <button class="icon-btn" id="pg-next" type="button" ${page === pages ? 'disabled' : ''} aria-label="Sljedeća strana">${icon('chevRight')}</button>
+            </div>
+        </div>` : ''}`;
+
+        $$('#tx-table th.sortable').forEach(th => th.addEventListener('click', () => {
+            const key = th.dataset.sort;
+            if (sortKey === key) {
+                sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortKey = key;
+                sortDir = 'desc';
+            }
+            page = 1;
+            renderTable();
+        }));
+        const prev = $('#pg-prev'), next = $('#pg-next');
+        if (prev) prev.addEventListener('click', () => { page--; renderTable(); });
+        if (next) next.addEventListener('click', () => { page++; renderTable(); });
 
         $$('#tx-table [data-act]').forEach(btn => btn.addEventListener('click', async () => {
             const id = Number(btn.closest('tr').dataset.id);
-            const transaction = transactions.find(t => t.id === id);
+            const transaction = allTransactions.find(t => t.id === id);
             if (btn.dataset.act === 'edit') {
                 openTransactionModal(transaction, loadTable);
             } else if (confirm('Obrisati ovu transakciju? Stanje računa će biti vraćeno.')) {
@@ -656,10 +833,108 @@ async function renderTransactions() {
         }));
     }
 
+    async function loadTable() {
+        const params = new URLSearchParams();
+        if ($('#f-account').value) params.set('accountId', $('#f-account').value);
+        if ($('#f-category').value) params.set('categoryId', $('#f-category').value);
+        if ($('#f-type').value) params.set('type', $('#f-type').value);
+        if ($('#f-from').value) params.set('from', $('#f-from').value);
+        if ($('#f-to').value) params.set('to', $('#f-to').value);
+        if ($('#f-search').value) params.set('search', $('#f-search').value);
+        allTransactions = await api('/api/transactions?' + params);
+        page = 1;
+        renderTable();
+    }
+
+    // CSV izvoz: postuje aktivne filtere i sortiranje, format prilagodjen Excelu
+    function exportCsv() {
+        if (!allTransactions.length) {
+            toast('Nema transakcija za izvoz', 'error');
+            return;
+        }
+        const field = value => {
+            const s = String(value ?? '');
+            return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+        };
+        const header = ['Datum', 'Opis', 'Kategorija', 'Račun', 'Tip', 'Iznos (EUR)', 'Tagovi'];
+        const lines = sorted().map(t => [
+            fmtDate(t.date),
+            t.description || '',
+            t.categoryName || '',
+            t.accountName,
+            t.type === 'INCOME' ? 'Prihod' : 'Rashod',
+            (t.type === 'INCOME' ? '' : '-') + String(t.amount).replace('.', ','),
+            t.tags.join(', ')
+        ].map(field).join(';'));
+
+        // BOM na pocetku da Excel prepozna UTF-8 (nasa slova)
+        const csv = '﻿' + [header.join(';'), ...lines].join('\r\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'transakcije-' + new Date().toISOString().slice(0, 10) + '.csv';
+        link.click();
+        URL.revokeObjectURL(url);
+        toast('CSV fajl je preuzet (' + allTransactions.length + ' transakcija)');
+    }
+
     $('#f-apply').addEventListener('click', loadTable);
     $('#f-search').addEventListener('keydown', e => { if (e.key === 'Enter') loadTable(); });
     $('#add-tx').addEventListener('click', () => openTransactionModal(null, loadTable));
+    $('#tx-export').addEventListener('click', exportCsv);
+    $('#tx-recurring').addEventListener('click', openRecurringModal);
     await loadTable();
+}
+
+// Ponavljajuca pravila: lista, pauziranje i brisanje
+function openRecurringModal() {
+    const body = openModal('Ponavljajuće transakcije',
+        '<div class="loading-state"><span class="spinner"></span>Učitavanje...</div>');
+
+    async function draw() {
+        let rules;
+        try {
+            rules = await api('/api/recurring');
+        } catch (err) {
+            body.innerHTML = `<p class="muted">${esc(err.message)}</p>`;
+            return;
+        }
+        body.innerHTML = (rules.length ? rules.map(r => `
+            <div class="rec-row ${r.active ? '' : 'paused'}" data-id="${r.id}">
+                <span class="rec-day"><b>${r.dayOfMonth}.</b><span>u mj.</span></span>
+                <span class="rec-info">
+                    <b>${esc(r.description || 'Bez opisa')}</b>
+                    <span>${esc(r.accountName)}${r.categoryName ? ' · ' + esc(r.categoryName) : ''}</span>
+                </span>
+                <span class="rec-amount amount ${r.type === 'INCOME' ? 'income' : 'expense'}">${r.type === 'INCOME' ? '+' : '-'}${fmtMoney(r.amount)}</span>
+                <input type="checkbox" class="switch" data-act="toggle" ${r.active ? 'checked' : ''}
+                       title="${r.active ? 'Pauziraj pravilo' : 'Aktiviraj pravilo'}" aria-label="Aktivno">
+                <button class="icon-btn danger" data-act="delete" type="button" title="Obriši pravilo">${icon('trash')}</button>
+            </div>`).join('')
+            : '<p class="muted" style="text-align:center;padding:20px 0 8px">Još nema ponavljajućih pravila.<br>Označite "Ponavljaj svakog mjeseca" pri unosu nove transakcije.</p>')
+            + '<p class="muted" style="font-size:12px;margin-top:16px">Aktivna pravila automatski upisuju transakciju izabranog dana svakog mjeseca.</p>';
+
+        $$('[data-act]', body).forEach(el => {
+            const eventName = el.dataset.act === 'toggle' ? 'change' : 'click';
+            el.addEventListener(eventName, async () => {
+                const id = Number(el.closest('.rec-row').dataset.id);
+                try {
+                    if (el.dataset.act === 'toggle') {
+                        await api(`/api/recurring/${id}/toggle`, { method: 'PUT' });
+                    } else if (confirm('Obrisati ovo pravilo? Već kreirane transakcije ostaju.')) {
+                        await api('/api/recurring/' + id, { method: 'DELETE' });
+                        toast('Pravilo obrisano');
+                    }
+                } catch (err) {
+                    toast(err.message, 'error');
+                }
+                draw();
+            });
+        });
+    }
+
+    draw();
 }
 
 function openTransactionModal(transaction, onSaved) {
@@ -693,7 +968,11 @@ function openTransactionModal(transaction, onSaved) {
                 <div class="form-field full"><span>Tagovi (odvojeni zarezom)</span>
                     <input type="text" name="tags" value="${isEdit ? esc(transaction.tags.join(', ')) : ''}" placeholder="npr. porodica, vikend"></div>
                 ${isEdit ? '' : `<div class="form-field full"><span>Prilog — račun ili faktura (opciono)</span>
-                    <input type="file" name="attachment"></div>`}
+                    <input type="file" name="attachment"></div>
+                <label class="form-field full" style="flex-direction:row;align-items:center;gap:10px;cursor:pointer">
+                    <input type="checkbox" name="recurring" class="switch">
+                    <span style="font-size:13px;font-weight:500;color:var(--text)">Ponavljaj svakog mjeseca na ovaj dan</span>
+                </label>`}
             </div>
             <div id="tx-attachments"></div>
             <div class="form-actions">
@@ -750,6 +1029,25 @@ function openTransactionModal(transaction, onSaved) {
                     }
                 } else {
                     toast('Transakcija dodana');
+                }
+                // Ako je oznaceno ponavljanje, kreiraj i mjesecno pravilo
+                if (e.target.elements.recurring && e.target.elements.recurring.checked) {
+                    try {
+                        await api('/api/recurring', {
+                            method: 'POST',
+                            body: {
+                                amount: payload.amount,
+                                type: payload.type,
+                                description: payload.description,
+                                dayOfMonth: Number(payload.date.slice(8, 10)),
+                                accountId: payload.accountId,
+                                categoryId: payload.categoryId
+                            }
+                        });
+                        toast('Pravilo kreirano — ponavlja se ' + Number(payload.date.slice(8, 10)) + '. u mjesecu');
+                    } catch (ruleErr) {
+                        toast('Ponavljajuće pravilo nije kreirano: ' + ruleErr.message, 'error');
+                    }
                 }
             }
             closeModal();

@@ -52,6 +52,9 @@ public class DemoDataSeeder {
     @Inject
     BudgetService budgetService;
 
+    @Inject
+    RecurringService recurringService;
+
     void onStart(@Observes StartupEvent event) {
         if (!seedEnabled) {
             return;
@@ -129,6 +132,11 @@ public class DemoDataSeeder {
                 BudgetPeriod.MONTHLY, List.of(categories.get("Zabava").id(), categories.get("Kupovina").id())));
         budgetService.createBudget(demo, new BudgetRequest("Svi troškovi", new BigDecimal("2000.00"),
                 BudgetPeriod.MONTHLY, List.of()));
+
+        // Ponavljajuce pravilo: kirija se svakog 3. u mjesecu upisuje sama
+        recurringService.createRule(demo, new RecurringRequest(
+                new BigDecimal("650.00"), TransactionType.EXPENSE, "Kirija za stan",
+                3, checking.id(), categories.get("Stanovanje").id()));
     }
 
     private void addIfPast(User user, LocalDate today, LocalDate date, BigDecimal amount,

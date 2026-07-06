@@ -6,6 +6,7 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import me.fit.model.Account;
+import me.fit.service.RecurringService;
 import org.jboss.logging.Logger;
 
 import java.math.BigDecimal;
@@ -18,6 +19,18 @@ public class FinanceScheduler {
 
     @Inject
     EntityManager em;
+
+    @Inject
+    RecurringService recurringService;
+
+    // Ponavljajuca pravila: provjera odmah po startu pa svakog sata
+    @Scheduled(every = "1h", delayed = "20s")
+    public void generateRecurringTransactions() {
+        int created = recurringService.generateDue();
+        if (created > 0) {
+            LOG.infof("Kreirano %d transakcija iz ponavljajućih pravila", created);
+        }
+    }
 
     @Scheduled(every = "10m")
     @Transactional

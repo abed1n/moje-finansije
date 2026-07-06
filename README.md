@@ -8,14 +8,19 @@ pokrece kao jedna aplikacija.
 
 - registracija i prijava (JWT token, lozinke se cuvaju kao BCrypt hash), uloge USER i ADMIN
 - racuni (tekuci, stednja, gotovina, kartica) sa detaljima banke, stanje se samo azurira
-- transakcije: prihodi i rashodi, kategorije, tagovi, filteri i pretraga
-- prilozi uz transakcije (upload racuna/faktura, preuzimanje, brisanje)
+- transakcije: prihodi i rashodi, kategorije, tagovi, filteri i pretraga, sortiranje i paginacija
+- ponavljajuce transakcije: mjesecna pravila (kirija, plata...) koja scheduler automatski upisuje
+- prilozi uz transakcije (upload racuna/faktura vec pri unosu, preuzimanje, brisanje)
+- CSV izvoz transakcija (postuje filtere, spreman za Excel)
 - kategorije po korisniku, default set se kreira pri registraciji
 - budzeti (mjesecni/godisnji) po kategorijama sa procentom potrosenog
+- upozorenja u aplikaciji kad budzet predje 80% limita (zvonce u sidebaru)
 - dashboard: ukupno stanje, prihodi/rashodi u mjesecu, tok novca za 6 mjeseci, rashodi po kategorijama
+- tamna tema (prekidac u sidebaru, pamti se po korisniku)
+- mobilni raspored sa donjom navigacijom
 - alati preko vanjskih API-ja: konverter valuta, lokacija i vrijeme po IP adresi (sa istorijom)
 - admin pregled svih korisnika
-- scheduler koji prijavljuje racune u minusu
+- scheduler: ponavljajuca pravila + prijava racuna u minusu
 - health check na /q/health i Swagger UI na /q/swagger-ui
 
 ## Pokretanje kroz Docker
@@ -77,6 +82,7 @@ Svi endpointi osim register/login traze `Authorization: Bearer <token>` header.
 - `POST /api/transactions/{id}/attachments` (multipart), `GET|DELETE /api/transactions/attachments/{id}`
 - `GET|POST /api/categories`, `PUT|DELETE /api/categories/{id}`
 - `GET|POST /api/budgets`, `PUT|DELETE /api/budgets/{id}`
+- `GET|POST /api/recurring`, `PUT /api/recurring/{id}/toggle`, `DELETE /api/recurring/{id}`
 - `GET /api/dashboard`
 - `GET /api/tools/currency?from=EUR&to=USD&value=100`, `GET /api/tools/location`,
   `GET /api/tools/timezone` + `/history` varijante

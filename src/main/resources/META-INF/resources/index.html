@@ -272,6 +272,10 @@
                     <svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
                 </div>
                 <div class="sidebar-title"><b>Moje finansije</b><span>Lični menadžer</span></div>
+                <button class="bell-btn" id="bell-btn" type="button" aria-label="Upozorenja za budžete">
+                    <svg class="ico" viewBox="0 0 24 24"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+                    <span class="bell-badge hidden" id="bell-badge">0</span>
+                </button>
             </div>
             <nav class="sidebar-nav" id="nav">
                 <div class="nav-label">Pregled</div>
@@ -318,6 +322,10 @@
                         <span id="user-email" class="muted">-</span>
                     </div>
                 </div>
+                <button id="theme-btn" class="btn btn-ghost btn-block" type="button">
+                    <svg class="ico ico-sm" id="theme-icon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                    <span id="theme-label">Tamna tema</span>
+                </button>
                 <button id="logout-btn" class="btn btn-ghost btn-block" type="button">
                     <svg class="ico ico-sm" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
                     Odjava
@@ -327,6 +335,29 @@
         <main class="content">
             <div id="view" class="view"></div>
         </main>
+
+        <nav class="mobile-nav" id="mobile-nav" aria-label="Navigacija">
+            <a href="#/dashboard" data-route="dashboard">
+                <svg class="ico" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                <span>Pregled</span>
+            </a>
+            <a href="#/transactions" data-route="transactions">
+                <svg class="ico" viewBox="0 0 24 24"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
+                <span>Transakcije</span>
+            </a>
+            <a href="#/accounts" data-route="accounts">
+                <svg class="ico" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                <span>Računi</span>
+            </a>
+            <a href="#/budgets" data-route="budgets">
+                <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                <span>Budžeti</span>
+            </a>
+            <button id="mobile-more" type="button">
+                <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                <span>Još</span>
+            </button>
+        </nav>
     </div>
 
     <!-- Modal -->
