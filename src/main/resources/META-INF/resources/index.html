@@ -149,58 +149,8 @@
 
         <section class="lp-light" id="lp-demo">
             <div class="lp-section-head reveal">
-                <h2>Vaše finansije, jasne na prvi pogled</h2>
-                <p>Ovako izgleda aplikacija iznutra — pravi pregled, pravi grafikoni, pravi podaci.</p>
-            </div>
-            <div class="lp-collage reveal">
-                <div class="app-mock" id="lp-chart">
-                    <div class="app-mock-label">Tok novca — zadnjih 6 mjeseci <span class="lp-hint">pređite mišem preko stubića</span></div>
-                    <div class="app-mock-value">11.490<small>,50 EUR ukupno stanje</small></div>
-                    <div class="mock-bars">
-                        <div class="mock-group" style="--hi:.52;--he:.34;--d:.10s" data-m="Februar" data-i="1.850" data-e="1.210"><i></i><b></b></div>
-                        <div class="mock-group" style="--hi:.66;--he:.29;--d:.18s" data-m="Mart" data-i="2.340" data-e="1.030"><i></i><b></b></div>
-                        <div class="mock-group" style="--hi:.48;--he:.42;--d:.26s" data-m="April" data-i="1.700" data-e="1.490"><i></i><b></b></div>
-                        <div class="mock-group" style="--hi:.78;--he:.31;--d:.34s" data-m="Maj" data-i="2.770" data-e="1.100"><i></i><b></b></div>
-                        <div class="mock-group" style="--hi:.62;--he:.47;--d:.42s" data-m="Jun" data-i="2.200" data-e="1.670"><i></i><b></b></div>
-                        <div class="mock-group" style="--hi:.90;--he:.36;--d:.50s" data-m="Jul" data-i="3.190" data-e="1.280"><i></i><b></b></div>
-                    </div>
-                    <div class="mock-months"><span>feb</span><span>mar</span><span>apr</span><span>maj</span><span>jun</span><span>jul</span></div>
-                    <div class="mock-legend">
-                        <span><i style="background:#059669"></i>Prihodi</span>
-                        <span><i style="background:#e34948"></i>Rashodi</span>
-                    </div>
-                </div>
-                <div class="lp-collage-side">
-                    <div class="app-mock">
-                        <div class="app-mock-label">Budžeti ovaj mjesec</div>
-                        <div class="mock-budget-row">
-                            <div class="mock-budget-head"><span>Hrana</span><span>317 / 450 EUR</span></div>
-                            <div class="mock-track"><div class="mock-fill" style="--w:70%"></div></div>
-                        </div>
-                        <div class="mock-budget-row">
-                            <div class="mock-budget-head"><span>Zabava i kupovina</span><span>211 / 250 EUR</span></div>
-                            <div class="mock-track"><div class="mock-fill warn" style="--w:84%"></div></div>
-                        </div>
-                    </div>
-                    <div class="app-mock">
-                        <div class="app-mock-label" style="margin-bottom:6px">Posljednje transakcije</div>
-                        <div class="mock-tx">
-                            <span class="mt-ico">💼</span>
-                            <span class="mt-name"><b>Mjesečna plata</b><span>Tekući račun</span></span>
-                            <span class="mt-amount up">+2.600,00</span>
-                        </div>
-                        <div class="mock-tx">
-                            <span class="mt-ico">🏠</span>
-                            <span class="mt-name"><b>Kirija za stan</b><span>Tekući račun</span></span>
-                            <span class="mt-amount down">-650,00</span>
-                        </div>
-                        <div class="mock-tx">
-                            <span class="mt-ico">🍔</span>
-                            <span class="mt-name"><b>Namirnice</b><span>Gotovina</span></span>
-                            <span class="mt-amount down">-95,50</span>
-                        </div>
-                    </div>
-                </div>
+                <h2>Šta dobijate</h2>
+                <p>Sve što vam treba za kućni budžet, i poneki alat više.</p>
             </div>
 
             <div class="lp-bento">
@@ -210,19 +160,28 @@
                     <p>Postavite mjesečni limit po kategorijama i vidite upozorenje prije nego što ga probijete.</p>
                     <div class="lp-b-demo">
                         <div class="mock-budget-row">
-                            <div class="mock-budget-head"><span>Hrana</span><span id="bd-label"><b>317</b> / 450 EUR</span></div>
-                            <div class="mock-track"><div class="mock-fill" id="bd-fill" style="--w:70%"></div></div>
+                            <div class="mock-budget-head"><span>Hrana</span><span>317 / 450 EUR</span></div>
+                            <div class="mock-track"><div class="mock-fill" style="--w:70%"></div></div>
                         </div>
-                        <div class="lp-slider-row">
-                            <label for="bd-range">Probajte — pomjerite limit i budžet reaguje odmah:</label>
-                            <input type="range" id="bd-range" min="320" max="700" step="10" value="450" aria-label="Mjesečni limit za hranu">
+                        <div class="mock-budget-row">
+                            <div class="mock-budget-head"><span>Zabava i kupovina</span><span>211 / 250 EUR</span></div>
+                            <div class="mock-track"><div class="mock-fill warn" style="--w:84%"></div></div>
                         </div>
                     </div>
                 </div>
                 <div class="lp-feature reveal">
                     <div class="lp-feature-ico"><svg viewBox="0 0 24 24"><path d="M12 3v3"/><path d="m6.6 6.6 2.1 2.1"/><path d="M3 12h3"/><path d="M12 18v3"/><path d="m17.4 6.6-2.1 2.1"/><path d="M18 12h3"/><circle cx="12" cy="12" r="4"/></svg></div>
-                    <h3>Kursevi i alati</h3>
-                    <p>Konverter valuta sa kursevima Evropske centralne banke — direktno u aplikaciji.</p>
+                    <h3>Konverter valuta</h3>
+                    <p>Kursevi Evropske centralne banke, uživo — probajte odmah:</p>
+                    <div class="lc">
+                        <input type="number" id="lc-amount" value="100" min="0" step="0.01" aria-label="Iznos za konverziju">
+                        <div class="lc-row">
+                            <select id="lc-from" aria-label="Iz valute"></select>
+                            <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                            <select id="lc-to" aria-label="U valutu"></select>
+                        </div>
+                        <div class="lc-result" id="lc-result">&nbsp;</div>
+                    </div>
                 </div>
                 <div class="lp-feature lp-b-wide reveal">
                     <div class="lp-b-split">

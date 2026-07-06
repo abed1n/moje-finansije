@@ -217,46 +217,37 @@ function initLanding() {
         }
     }
 
-    // Interaktivni budzet demo: slider mijenja limit, traka i boja reaguju
-    const budgetRange = $('#bd-range');
-    if (budgetRange) {
-        const spent = 317;
-        const fill = $('#bd-fill');
-        const label = $('#bd-label');
-        budgetRange.addEventListener('input', () => {
-            const limit = Number(budgetRange.value);
-            const usage = spent / limit;
-            fill.style.transition = 'width .2s ease';
-            fill.style.setProperty('--w', Math.min(usage * 100, 100).toFixed(1) + '%');
-            fill.classList.toggle('warn', usage >= .8 && usage < 1);
-            fill.classList.toggle('over', usage >= 1);
-            label.innerHTML = `<b>${spent}</b> / ${limit} EUR`;
-        });
-    }
+    // Zivi konverter valuta na landing stranici (Frankfurter/ECB, radi bez prijave)
+    const lcAmount = $('#lc-amount');
+    if (lcAmount) {
+        const lcFrom = $('#lc-from');
+        const lcTo = $('#lc-to');
+        const lcResult = $('#lc-result');
+        const codes = ['EUR', 'USD', 'GBP', 'CHF', 'JPY', 'CAD', 'AUD', 'SEK', 'NOK', 'PLN', 'CZK', 'DKK'];
+        lcFrom.innerHTML = codes.map(c => `<option ${c === 'EUR' ? 'selected' : ''}>${c}</option>`).join('');
+        lcTo.innerHTML = codes.map(c => `<option ${c === 'USD' ? 'selected' : ''}>${c}</option>`).join('');
 
-    // Tooltip sa iznosima na landing grafikonu
-    const lpChart = $('#lp-chart');
-    if (lpChart) {
-        const tip = document.createElement('div');
-        tip.className = 'chart-tip';
-        lpChart.appendChild(tip);
-        $$('.mock-group', lpChart).forEach(group => {
-            group.addEventListener('mouseenter', () => {
-                tip.innerHTML = `
-                    <div class="tip-title">${group.dataset.m}</div>
-                    <div class="tip-row"><span class="swatch" style="background:#059669"></span>Prihodi <b>+${group.dataset.i} EUR</b></div>
-                    <div class="tip-row"><span class="swatch" style="background:#e34948"></span>Rashodi <b>-${group.dataset.e} EUR</b></div>`;
-                tip.classList.add('show');
-            });
-            group.addEventListener('mousemove', e => {
-                const rect = lpChart.getBoundingClientRect();
-                const x = Math.min(e.clientX - rect.left + 14, rect.width - tip.offsetWidth - 8);
-                const y = e.clientY - rect.top - tip.offsetHeight - 10;
-                tip.style.left = Math.max(x, 8) + 'px';
-                tip.style.top = Math.max(y, 4) + 'px';
-            });
-            group.addEventListener('mouseleave', () => tip.classList.remove('show'));
-        });
+        const fmtResult = (value, code) =>
+            `= <b>${Number(value).toLocaleString('sr-ME', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${code}</b>`;
+
+        async function convert() {
+            const amount = Number(lcAmount.value);
+            if (!amount || amount <= 0) { lcResult.innerHTML = '&nbsp;'; return; }
+            if (lcFrom.value === lcTo.value) { lcResult.innerHTML = fmtResult(amount, lcTo.value); return; }
+            try {
+                const res = await fetch(`https://api.frankfurter.dev/v1/latest?amount=${amount}&base=${lcFrom.value}&symbols=${lcTo.value}`);
+                if (!res.ok) throw new Error();
+                const data = await res.json();
+                lcResult.innerHTML = fmtResult(data.rates[lcTo.value], lcTo.value);
+            } catch (ignored) {
+                lcResult.textContent = 'Kursevi trenutno nisu dostupni';
+            }
+        }
+
+        let lcTimer;
+        const scheduleConvert = () => { clearTimeout(lcTimer); lcTimer = setTimeout(convert, 350); };
+        [lcAmount, lcFrom, lcTo].forEach(el => el.addEventListener('input', scheduleConvert));
+        convert();
     }
 
     // Lottie animacija novcanika u bento kartici
@@ -280,21 +271,6 @@ function initLanding() {
         }
     }
 
-    // Blagi 3D tilt na karticama kolaza (samo mis, ne dodirni ekrani)
-    const canTilt = window.matchMedia('(hover: hover) and (pointer: fine)').matches
-        && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (canTilt) {
-        $$('#auth-screen .app-mock').forEach(card => {
-            card.style.transition = 'transform .18s ease-out';
-            card.addEventListener('mousemove', e => {
-                const rect = card.getBoundingClientRect();
-                const x = (e.clientX - rect.left) / rect.width - .5;
-                const y = (e.clientY - rect.top) / rect.height - .5;
-                card.style.transform = `perspective(900px) rotateY(${(x * 4).toFixed(2)}deg) rotateX(${(-y * 4).toFixed(2)}deg)`;
-            });
-            card.addEventListener('mouseleave', () => { card.style.transform = ''; });
-        });
-    }
 }
 
 function showApp() {
