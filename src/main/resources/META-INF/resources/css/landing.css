@@ -301,11 +301,11 @@
 .lp-marquee {
     overflow: hidden;
     border-top: 1px solid rgba(255, 255, 255, .07);
+    border-bottom: 1px solid rgba(255, 255, 255, .07);
     background: rgba(255, 255, 255, .02);
     display: flex;
     align-items: center;
     position: relative;
-    padding-bottom: 34px;
 }
 
 .lp-marquee::after {
