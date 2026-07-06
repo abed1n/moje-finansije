@@ -689,6 +689,8 @@ function openTransactionModal(transaction, onSaved) {
                     <input type="text" name="description" value="${isEdit ? esc(transaction.description || '') : ''}" placeholder="npr. Kupovina namirnica"></div>
                 <div class="form-field full"><span>Tagovi (odvojeni zarezom)</span>
                     <input type="text" name="tags" value="${isEdit ? esc(transaction.tags.join(', ')) : ''}" placeholder="npr. porodica, vikend"></div>
+                ${isEdit ? '' : `<div class="form-field full"><span>Prilog — račun ili faktura (opciono)</span>
+                    <input type="file" name="attachment"></div>`}
             </div>
             <div id="tx-attachments"></div>
             <div class="form-actions">
@@ -731,8 +733,21 @@ function openTransactionModal(transaction, onSaved) {
                 await api('/api/transactions/' + transaction.id, { method: 'PUT', body: payload });
                 toast('Transakcija ažurirana');
             } else {
-                await api('/api/transactions', { method: 'POST', body: payload });
-                toast('Transakcija dodana');
+                // Odlozeni upload: prvo sacuvaj transakciju, pa prilozi fajl na dobijeni ID
+                const created = await api('/api/transactions', { method: 'POST', body: payload });
+                const fileInput = e.target.elements.attachment;
+                if (fileInput && fileInput.files.length) {
+                    const fileData = new FormData();
+                    fileData.append('file', fileInput.files[0]);
+                    try {
+                        await api(`/api/transactions/${created.id}/attachments`, { method: 'POST', body: fileData });
+                        toast('Transakcija i prilog dodani');
+                    } catch (uploadErr) {
+                        toast('Transakcija je dodana, ali prilog nije sačuvan: ' + uploadErr.message, 'error');
+                    }
+                } else {
+                    toast('Transakcija dodana');
+                }
             }
             closeModal();
             onSaved();
