@@ -645,15 +645,45 @@
 }
 .lp-photo-copy > p { color: var(--text-2); font-size: 15px; margin-top: 14px; max-width: 44ch; }
 
-.lp-photo-list { list-style: none; margin-top: 24px; display: flex; flex-direction: column; gap: 13px; }
-.lp-photo-list li { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; color: var(--text); }
-.lp-photo-list .check {
-    width: 22px; height: 22px; border-radius: 7px; flex-shrink: 0;
-    background: var(--brand-soft);
-    border: 1px solid rgba(5, 150, 105, .25);
-    display: flex; align-items: center; justify-content: center;
+/* Tri koraka uz fotografiju */
+.lp-steps-list {
+    list-style: none;
+    margin-top: 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    position: relative;
 }
-.lp-photo-list .check svg { width: 12px; height: 12px; stroke: var(--brand-600); stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Isprekidana linija koja povezuje brojeve */
+.lp-steps-list::before {
+    content: "";
+    position: absolute;
+    left: 16px;
+    top: 18px;
+    bottom: 18px;
+    border-left: 2px dashed rgba(5, 150, 105, .3);
+}
+
+.lp-steps-list li { display: flex; align-items: flex-start; gap: 15px; position: relative; }
+
+.lp-steps-list .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 33px; height: 33px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--brand);
+    color: #fff;
+    font-family: var(--lp-font-display);
+    font-size: 15px;
+    font-weight: 800;
+    box-shadow: 0 0 0 5px #ffffff, 0 6px 14px rgba(5, 150, 105, .3);
+}
+
+.lp-steps-list b { display: block; font-size: 14.5px; font-weight: 700; letter-spacing: -.01em; }
+.lp-steps-list li > div > span { display: block; font-size: 13px; color: var(--text-2); margin-top: 3px; max-width: 40ch; }
 
 .lp-photo-frame {
     position: relative;
@@ -671,52 +701,6 @@
     border: 1px solid rgba(12, 17, 29, .1);
     pointer-events: none;
 }
-
-/* ---------------- Tri koraka ---------------- */
-.lp-steps {
-    background: var(--lp-cream);
-    color: var(--text);
-    padding: 88px 24px 118px;
-}
-
-.lp-steps-row {
-    max-width: 980px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 28px;
-    position: relative;
-}
-
-/* Linija koja povezuje korake */
-.lp-steps-row::before {
-    content: "";
-    position: absolute;
-    top: 21px;
-    left: 12%; right: 12%;
-    border-top: 2px dashed rgba(5, 150, 105, .3);
-    z-index: 0;
-}
-
-.lp-step { position: relative; z-index: 1; text-align: center; padding: 0 8px; }
-
-.lp-step-num {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    background: var(--brand);
-    color: #fff;
-    font-family: var(--lp-font-display);
-    font-size: 19px;
-    font-weight: 800;
-    box-shadow: 0 0 0 7px var(--lp-cream), 0 8px 20px rgba(5, 150, 105, .35);
-    margin-bottom: 16px;
-}
-
-.lp-step h3 { font-size: 16px; font-weight: 700; letter-spacing: -.01em; }
-.lp-step p { font-size: 13.5px; color: var(--text-2); margin-top: 7px; max-width: 30ch; margin-left: auto; margin-right: auto; }
 
 /* ---------------- Brojke ---------------- */
 .lp-numbers {
@@ -836,8 +820,6 @@
     .lp-nav-links { display: none; }
     .lp-trio { grid-template-columns: 1fr; }
     .lp-conv-band { grid-template-columns: 1fr; padding: 26px 24px; }
-    .lp-steps-row { grid-template-columns: 1fr; gap: 36px; }
-    .lp-steps-row::before { display: none; }
 }
 
 @media (max-width: 640px) {
