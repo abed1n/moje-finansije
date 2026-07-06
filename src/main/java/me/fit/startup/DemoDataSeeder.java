@@ -55,6 +55,9 @@ public class DemoDataSeeder {
     @Inject
     RecurringService recurringService;
 
+    @Inject
+    TransferService transferService;
+
     void onStart(@Observes StartupEvent event) {
         if (!seedEnabled) {
             return;
@@ -99,8 +102,12 @@ public class DemoDataSeeder {
                 addIfPast(demo, today, month.atDay(14), new BigDecimal("350.00"),
                         TransactionType.INCOME, "Freelance projekat", checking.id(), categories.get("Honorar"), List.of("posao"));
             }
-            addIfPast(demo, today, month.atDay(2), new BigDecimal("200.00"),
-                    TransactionType.INCOME, "Mjesečna štednja", savings.id(), categories.get("Ostali prihodi"), List.of());
+            // Stednja je prebacivanje izmedju vlastitih racuna, ne prihod
+            LocalDate savingsDate = month.atDay(2);
+            if (!savingsDate.isAfter(today)) {
+                transferService.createTransfer(demo, new TransferRequest(new BigDecimal("200.00"),
+                        savingsDate, "Mjesečna štednja", checking.id(), savings.id()));
+            }
 
             addIfPast(demo, today, month.atDay(3), new BigDecimal("650.00"),
                     TransactionType.EXPENSE, "Kirija za stan", checking.id(), categories.get("Stanovanje"), List.of());

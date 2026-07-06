@@ -64,7 +64,8 @@ const ICONS = {
     tools: '<path d="M12 3v3"/><path d="m6.6 6.6 2.1 2.1"/><path d="M3 12h3"/><path d="M12 18v3"/><path d="m17.4 6.6-2.1 2.1"/><path d="M18 12h3"/><circle cx="12" cy="12" r="4"/>',
     user: '<circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>',
     shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
-    logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>'
+    logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+    transfer: '<path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/>'
 };
 
 function icon(name, cls = 'ico') {
@@ -1125,7 +1126,10 @@ async function renderAccounts() {
     $('#view').innerHTML = `
         <div class="page-header">
             <div><h1>Računi</h1><p>Bankovni računi, kartice i gotovina</p></div>
-            <button class="btn btn-primary" id="add-account">${icon('plus', 'ico ico-sm')} Novi račun</button>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <button class="btn btn-secondary" id="transfer-btn" type="button">${icon('transfer', 'ico ico-sm')} Prebaci novac</button>
+                <button class="btn btn-primary" id="add-account" type="button">${icon('plus', 'ico ico-sm')} Novi račun</button>
+            </div>
         </div>
         ${accounts.length ? `<div class="accounts-grid">${accounts.map(a => `
             <div class="card account-card" data-id="${a.id}">
@@ -1146,6 +1150,13 @@ async function renderAccounts() {
     const openForm = (account) => openAccountModal(account, renderAccounts);
     if ($('#add-account-empty')) $('#add-account-empty').addEventListener('click', () => openForm(null));
     if ($('#add-account')) $('#add-account').addEventListener('click', () => openForm(null));
+    $('#transfer-btn').addEventListener('click', () => {
+        if (accounts.length < 2) {
+            toast('Za prebacivanje trebaju bar dva računa', 'error');
+            return;
+        }
+        openTransferModal(accounts, renderAccounts);
+    });
 
     $$('.account-card [data-act]').forEach(btn => btn.addEventListener('click', async () => {
         const id = Number(btn.closest('.account-card').dataset.id);
@@ -1217,6 +1228,90 @@ function openAccountModal(account, onSaved) {
             onSaved();
         } catch (err) { toast(err.message, 'error'); }
     });
+}
+
+// Prebacivanje novca izmedju racuna
+function openTransferModal(accounts, onChange) {
+    const options = selected => accounts.map(a =>
+        `<option value="${a.id}" ${a.id === selected ? 'selected' : ''}>${esc(a.name)} (${esc(a.currency)})</option>`).join('');
+
+    const body = openModal('Prebaci novac', `
+        <form id="transfer-form">
+            <div class="form-grid">
+                <div class="form-field"><span>Sa računa</span>
+                    <select name="fromAccountId">${options(accounts[0].id)}</select></div>
+                <div class="form-field"><span>Na račun</span>
+                    <select name="toAccountId">${options(accounts[1].id)}</select></div>
+                <div class="form-field"><span>Iznos</span>
+                    <input type="number" name="amount" step="0.01" min="0.01" required placeholder="0.00"></div>
+                <div class="form-field"><span>Datum</span>
+                    <input type="date" name="date" required value="${new Date().toISOString().slice(0, 10)}"></div>
+                <div class="form-field full"><span>Opis (opciono)</span>
+                    <input type="text" name="description" placeholder="npr. Mjesečna štednja"></div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Prebaci</button>
+            </div>
+        </form>
+        <div style="margin-top:20px">
+            <span style="font-size:12.5px;font-weight:600;color:var(--text-2)">Posljednja prebacivanja</span>
+            <div id="transfer-history"></div>
+        </div>`);
+
+    async function drawHistory() {
+        const container = $('#transfer-history', body);
+        let transfers;
+        try {
+            transfers = await api('/api/transfers');
+        } catch (err) {
+            container.innerHTML = `<p class="muted" style="font-size:13px;margin-top:8px">${esc(err.message)}</p>`;
+            return;
+        }
+        container.innerHTML = transfers.length ? transfers.map(t => `
+            <div class="tr-row" data-id="${t.id}">
+                <span class="tr-date">${fmtDate(t.date)}</span>
+                <span class="tr-route"><b>${esc(t.fromAccountName)}</b> → <b>${esc(t.toAccountName)}</b>
+                    ${t.description ? `<span>${esc(t.description)}</span>` : ''}</span>
+                <span class="amount">${fmtMoney(t.amount)}</span>
+                <button class="icon-btn danger" type="button" title="Poništi prebacivanje">${icon('trash')}</button>
+            </div>`).join('')
+            : '<p class="muted" style="font-size:13px;margin-top:8px">Još nema prebacivanja.</p>';
+
+        $$('.tr-row button', container).forEach(btn => btn.addEventListener('click', async () => {
+            if (!confirm('Poništiti ovo prebacivanje? Novac se vraća na izvorni račun.')) return;
+            const id = Number(btn.closest('.tr-row').dataset.id);
+            try {
+                await api('/api/transfers/' + id, { method: 'DELETE' });
+                toast('Prebacivanje poništeno');
+                drawHistory();
+                onChange();
+            } catch (err) { toast(err.message, 'error'); }
+        }));
+    }
+
+    $('#transfer-form', body).addEventListener('submit', async e => {
+        e.preventDefault();
+        const form = new FormData(e.target);
+        try {
+            await api('/api/transfers', {
+                method: 'POST',
+                body: {
+                    amount: Number(form.get('amount')),
+                    date: form.get('date'),
+                    description: form.get('description') || null,
+                    fromAccountId: Number(form.get('fromAccountId')),
+                    toAccountId: Number(form.get('toAccountId'))
+                }
+            });
+            toast('Novac je prebačen');
+            e.target.elements.amount.value = '';
+            e.target.elements.description.value = '';
+            drawHistory();
+            onChange();
+        } catch (err) { toast(err.message, 'error'); }
+    });
+
+    drawHistory();
 }
 
 // Budzeti
