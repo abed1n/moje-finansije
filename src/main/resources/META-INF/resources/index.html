@@ -153,8 +153,8 @@
                 <p>Alati koje ćete stvarno koristiti, svaki dan.</p>
             </div>
 
-            <div class="lp-bento">
-                <div class="lp-feature lp-b-wide reveal">
+            <div class="lp-trio">
+                <div class="lp-feature reveal">
                     <div class="lp-feature-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
                     <h3>Mjesečni budžeti</h3>
                     <p>Odredite koliko mjesečno želite potrošiti na hranu, izlaske ili bilo šta drugo.
@@ -170,36 +170,13 @@
                         </div>
                     </div>
                 </div>
-                <div class="lp-feature lp-conv reveal">
-                    <div class="lp-feature-ico"><svg viewBox="0 0 24 24"><path d="M12 3v3"/><path d="m6.6 6.6 2.1 2.1"/><path d="M3 12h3"/><path d="M12 18v3"/><path d="m17.4 6.6-2.1 2.1"/><path d="M18 12h3"/><circle cx="12" cy="12" r="4"/></svg></div>
-                    <h3>Konverter valuta</h3>
-                    <p>Radi i ovdje, probajte:</p>
-                    <div class="lc">
-                        <div class="lc-row">
-                            <input type="number" id="lc-amount" value="100" min="0" step="0.01" aria-label="Iznos za konverziju">
-                            <select id="lc-from" aria-label="Iz valute"></select>
-                        </div>
-                        <button class="lc-swap" id="lc-swap" type="button" aria-label="Zamijeni valute">
-                            <svg viewBox="0 0 24 24"><path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/></svg>
-                        </button>
-                        <div class="lc-row lc-out">
-                            <div class="lc-result" id="lc-result">&nbsp;</div>
-                            <select id="lc-to" aria-label="U valutu"></select>
-                        </div>
-                        <span class="lc-note">Dnevni kursevi Evropske centralne banke</span>
-                    </div>
+                <div class="lp-feature reveal" style="transition-delay:.1s">
+                    <div class="lp-feature-ico"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></div>
+                    <h3>Svi računi na jednom mjestu</h3>
+                    <p>Tekući, štednja, gotovina, kartica. Upišete trošak i stanje se samo preračuna.</p>
+                    <div id="wallet-anim" class="lp-b-anim" aria-hidden="true"></div>
                 </div>
-                <div class="lp-feature lp-b-wide reveal">
-                    <div class="lp-b-split">
-                        <div>
-                            <div class="lp-feature-ico"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></div>
-                            <h3>Svi računi na jednom mjestu</h3>
-                            <p>Tekući, štednja, gotovina, kartica. Upišete trošak i stanje se samo preračuna.</p>
-                        </div>
-                        <div id="wallet-anim" class="lp-b-anim lp-b-anim-lg" aria-hidden="true"></div>
-                    </div>
-                </div>
-                <div class="lp-feature reveal">
+                <div class="lp-feature reveal" style="transition-delay:.2s">
                     <div class="lp-feature-ico"><svg viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 16h8"/><path d="M7 11h12"/><path d="M7 6h3"/></svg></div>
                     <h3>Grafikoni i izvještaji</h3>
                     <p>Na kraju mjeseca vam je jasno na šta je otišao novac, bez kopanja po tabelama.</p>
@@ -212,6 +189,24 @@
                             <span><i style="background:#e87ba4"></i>Ostalo</span>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div class="lp-conv-band reveal">
+                <div class="lp-conv-copy">
+                    <h3>Konverter valuta</h3>
+                    <p>Dnevni kursevi Evropske centralne banke. Ukucajte iznos i probajte.</p>
+                </div>
+                <div class="lp-conv-ui">
+                    <div class="lc-controls">
+                        <input type="number" id="lc-amount" value="100" min="0" step="0.01" aria-label="Iznos za konverziju">
+                        <select id="lc-from" aria-label="Iz valute"></select>
+                        <button class="lc-swap" id="lc-swap" type="button" aria-label="Zamijeni valute">
+                            <svg viewBox="0 0 24 24"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
+                        </button>
+                        <select id="lc-to" aria-label="U valutu"></select>
+                    </div>
+                    <div class="lc-result" id="lc-result">&nbsp;</div>
                 </div>
             </div>
         </section>

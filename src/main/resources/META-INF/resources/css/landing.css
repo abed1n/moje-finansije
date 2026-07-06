@@ -482,93 +482,104 @@
 .mock-fill.warn { background: var(--status-warn); }
 .reveal.in .mock-fill { width: var(--w); }
 
-/* Funkcionalnosti — bento raspored */
-.lp-bento {
+/* Funkcionalnosti — tri jednake kartice */
+.lp-trio {
     max-width: 1120px;
     margin: 0 auto;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 16px;
+    align-items: stretch;
 }
-.lp-b-wide { grid-column: span 2; }
 
-.lp-b-demo { margin-top: 18px; max-width: 440px; }
+.lp-b-demo { margin-top: 18px; }
 
-.lp-b-anim { height: 130px; margin-top: 10px; display: flex; justify-content: center; }
+.lp-b-anim { height: 140px; margin-top: 12px; display: flex; justify-content: center; }
 .lp-b-anim svg { height: 100%; width: auto; }
-.lp-b-anim-lg { height: 200px; margin-top: 0; }
 
-/* Zivi konverter valuta — tamna, istaknuta kartica u bento mrezi */
-.lp-conv {
+/* Konverter valuta — spotlight panel preko cijele sirine sekcije */
+.lp-conv-band {
+    max-width: 1120px;
+    margin: 18px auto 0;
+    display: grid;
+    grid-template-columns: .8fr 1.2fr;
+    gap: 20px 48px;
+    align-items: center;
     background:
-        radial-gradient(340px 220px at 88% -18%, rgba(63, 224, 143, .22) 0%, transparent 60%),
-        var(--lp-forest);
-    border-color: rgba(63, 224, 143, .28);
-    color: var(--lp-text);
-}
-.lp-conv:hover { box-shadow: 0 12px 36px rgba(5, 43, 33, .45); }
-.lp-conv h3 { color: var(--lp-text); }
-.lp-conv p { color: var(--lp-text-2); }
-.lp-conv .lp-feature-ico {
-    background: rgba(63, 224, 143, .14);
+        radial-gradient(520px 260px at 92% -30%, rgba(63, 224, 143, .18) 0%, transparent 60%),
+        var(--lp-ink);
     border: 1px solid rgba(63, 224, 143, .3);
-    color: var(--lp-mint);
+    border-radius: 20px;
+    padding: 30px 34px;
+    box-shadow: 0 24px 70px rgba(7, 23, 16, .35);
+    transition-delay: .15s;
 }
 
-.lc { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
-.lc-row { display: flex; align-items: center; gap: 8px; }
-
-.lc input, .lc select {
-    background: rgba(255, 255, 255, .07);
-    border: 1px solid rgba(255, 255, 255, .16);
-    color: var(--lp-text);
-    font-size: 13.5px;
-    padding: 9px 11px;
-    box-shadow: none;
+.lp-conv-copy h3 {
+    font-family: var(--lp-font-display);
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    color: #ffffff;
+    margin-bottom: 0;
 }
-.lc input:focus, .lc select:focus { border-color: var(--lp-mint); box-shadow: 0 0 0 3px rgba(63, 224, 143, .2); }
-.lc input { flex: 1; min-width: 0; font-variant-numeric: tabular-nums; font-weight: 600; }
-.lc select { width: 84px; flex-shrink: 0; font-weight: 600; }
-.lc select option { color: #0c111d; background: #ffffff; }
+.lp-conv-copy p { font-size: 13.5px; color: #a8d8c2; margin-top: 8px; }
+
+.lp-conv-ui { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+.lc-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.lc-controls input, .lc-controls select {
+    background: #ffffff;
+    border: 0;
+    color: #0c111d;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 12px 14px;
+    border-radius: 11px;
+    box-shadow: inset 0 0 0 1px rgba(12, 17, 29, .08);
+}
+.lc-controls input:focus, .lc-controls select:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(63, 224, 143, .45);
+}
+.lc-controls input { flex: 1; min-width: 110px; font-variant-numeric: tabular-nums; }
+.lc-controls select { width: 92px; flex-shrink: 0; cursor: pointer; }
 
 .lc-swap {
-    align-self: center;
-    width: 30px; height: 30px;
-    margin: -1px 0;
+    width: 40px; height: 40px;
+    flex-shrink: 0;
     border-radius: 50%;
-    border: 1px solid rgba(63, 224, 143, .32);
-    background: rgba(63, 224, 143, .12);
-    color: var(--lp-mint);
+    border: 0;
+    background: var(--lp-mint);
+    color: #06301f;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
+    box-shadow: 0 4px 14px rgba(63, 224, 143, .35);
     transition: transform .3s cubic-bezier(.16, 1, .3, 1), background .15s;
 }
-.lc-swap:hover { background: rgba(63, 224, 143, .22); }
+.lc-swap:hover { background: #5ceaa2; }
 .lc-swap.flip { transform: rotate(180deg); }
-.lc-swap svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.lc-swap svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 
 .lc-result {
-    flex: 1;
-    min-width: 0;
     font-family: var(--lp-font-display);
-    font-size: 23px;
+    font-size: clamp(26px, 3.4vw, 36px);
     font-weight: 800;
-    letter-spacing: -.015em;
+    letter-spacing: -.02em;
     color: var(--lp-mint);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    min-height: 30px;
+    min-height: 42px;
+    line-height: 1.15;
 }
-.lc-note { font-size: 11px; color: rgba(158, 207, 184, .65); }
+.lc-result::before { content: "= "; color: rgba(255, 255, 255, .45); font-weight: 700; }
 
 /* Donut red u maloj kartici */
 .lp-b-donut-row { display: flex; align-items: center; gap: 18px; margin-top: 16px; }
 
-.lp-b-split { display: grid; grid-template-columns: 1.2fr .8fr; gap: 20px; align-items: center; }
-
-.lp-b-donut-wrap { display: flex; align-items: center; gap: 16px; justify-content: flex-end; }
 .lp-b-donut {
     width: 108px; height: 108px;
     border-radius: 50%;
@@ -824,8 +835,8 @@
     .lp-photo-inner { grid-template-columns: 1fr; gap: 32px; }
     .lp-photo-frame { order: -1; }
     .lp-nav-links { display: none; }
-    .lp-bento { grid-template-columns: 1fr; }
-    .lp-b-wide { grid-column: auto; }
+    .lp-trio { grid-template-columns: 1fr; }
+    .lp-conv-band { grid-template-columns: 1fr; padding: 26px 24px; }
     .lp-steps-row { grid-template-columns: 1fr; gap: 36px; }
     .lp-steps-row::before { display: none; }
 }
@@ -835,6 +846,4 @@
     .lp-light { padding: 64px 18px; }
     .lp-stats { gap: 24px; }
     .lp-marquee-label { display: none; }
-    .lp-b-split { grid-template-columns: 1fr; }
-    .lp-b-donut-wrap { justify-content: flex-start; }
 }
