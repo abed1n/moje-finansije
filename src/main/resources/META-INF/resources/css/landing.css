@@ -505,10 +505,10 @@
     grid-template-columns: .8fr 1.2fr;
     gap: 20px 48px;
     align-items: center;
-    background: linear-gradient(135deg, #e9f6ef 0%, #f4faf6 100%);
-    border: 1px solid rgba(5, 150, 105, .22);
-    border-radius: 20px;
-    padding: 28px 32px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 26px 24px;
     box-shadow: var(--shadow-sm);
     transition-delay: .15s;
 }
@@ -529,7 +529,7 @@
 
 .lc-controls input, .lc-controls select {
     background: #ffffff;
-    border: 1px solid rgba(5, 150, 105, .2);
+    border: 1px solid var(--border-strong);
     color: var(--text);
     font-size: 15px;
     font-weight: 700;
