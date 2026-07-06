@@ -107,7 +107,12 @@
 .lp-hero {
     position: relative;
     overflow: hidden;
-    padding: 84px 24px 88px;
+    padding: 56px 24px 72px;
+    /* Prvi ekran popunjava cijeli viewport (minus nav ~63px) */
+    min-height: calc(100vh - 63px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .lp-hero::before {
@@ -178,6 +183,7 @@
 .lp-hero-inner {
     position: relative;
     z-index: 1;
+    width: 100%;
     max-width: 1120px;
     margin: 0 auto;
     display: grid;
