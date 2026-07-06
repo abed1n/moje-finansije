@@ -498,19 +498,70 @@
 .lp-b-anim svg { height: 100%; width: auto; }
 .lp-b-anim-lg { height: 200px; margin-top: 0; }
 
-/* Zivi konverter valuta u bento kartici */
-.lc { margin-top: 14px; display: flex; flex-direction: column; gap: 9px; }
-.lc input, .lc select { font-size: 13px; padding: 8px 10px; }
-.lc-row { display: flex; align-items: center; gap: 8px; }
-.lc-row svg { width: 15px; height: 15px; stroke: var(--text-3); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-.lc-result {
-    font-size: 17px;
-    font-weight: 500;
-    color: var(--text-2);
-    font-variant-numeric: tabular-nums;
-    min-height: 26px;
+/* Zivi konverter valuta — tamna, istaknuta kartica u bento mrezi */
+.lp-conv {
+    background:
+        radial-gradient(340px 220px at 88% -18%, rgba(63, 224, 143, .22) 0%, transparent 60%),
+        var(--lp-forest);
+    border-color: rgba(63, 224, 143, .28);
+    color: var(--lp-text);
 }
-.lc-result b { color: var(--brand-600); font-weight: 800; letter-spacing: -.01em; }
+.lp-conv:hover { box-shadow: 0 12px 36px rgba(5, 43, 33, .45); }
+.lp-conv h3 { color: var(--lp-text); }
+.lp-conv p { color: var(--lp-text-2); }
+.lp-conv .lp-feature-ico {
+    background: rgba(63, 224, 143, .14);
+    border: 1px solid rgba(63, 224, 143, .3);
+    color: var(--lp-mint);
+}
+
+.lc { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+.lc-row { display: flex; align-items: center; gap: 8px; }
+
+.lc input, .lc select {
+    background: rgba(255, 255, 255, .07);
+    border: 1px solid rgba(255, 255, 255, .16);
+    color: var(--lp-text);
+    font-size: 13.5px;
+    padding: 9px 11px;
+    box-shadow: none;
+}
+.lc input:focus, .lc select:focus { border-color: var(--lp-mint); box-shadow: 0 0 0 3px rgba(63, 224, 143, .2); }
+.lc input { flex: 1; min-width: 0; font-variant-numeric: tabular-nums; font-weight: 600; }
+.lc select { width: 84px; flex-shrink: 0; font-weight: 600; }
+.lc select option { color: #0c111d; background: #ffffff; }
+
+.lc-swap {
+    align-self: center;
+    width: 30px; height: 30px;
+    margin: -1px 0;
+    border-radius: 50%;
+    border: 1px solid rgba(63, 224, 143, .32);
+    background: rgba(63, 224, 143, .12);
+    color: var(--lp-mint);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: transform .3s cubic-bezier(.16, 1, .3, 1), background .15s;
+}
+.lc-swap:hover { background: rgba(63, 224, 143, .22); }
+.lc-swap.flip { transform: rotate(180deg); }
+.lc-swap svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.lc-result {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--lp-font-display);
+    font-size: 23px;
+    font-weight: 800;
+    letter-spacing: -.015em;
+    color: var(--lp-mint);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 30px;
+}
+.lc-note { font-size: 11px; color: rgba(158, 207, 184, .65); }
 
 /* Donut red u maloj kartici */
 .lp-b-donut-row { display: flex; align-items: center; gap: 18px; margin-top: 16px; }

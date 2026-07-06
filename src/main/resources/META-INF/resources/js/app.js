@@ -217,37 +217,50 @@ function initLanding() {
         }
     }
 
-    // Zivi konverter valuta na landing stranici (Frankfurter/ECB, radi bez prijave)
+    // Zivi konverter valuta: kursna tabela se ucita jednom (Frankfurter/ECB),
+    // a konverzija se racuna lokalno pa je rezultat trenutan dok korisnik kuca
     const lcAmount = $('#lc-amount');
     if (lcAmount) {
         const lcFrom = $('#lc-from');
         const lcTo = $('#lc-to');
         const lcResult = $('#lc-result');
+        const lcSwap = $('#lc-swap');
         const codes = ['EUR', 'USD', 'GBP', 'CHF', 'JPY', 'CAD', 'AUD', 'SEK', 'NOK', 'PLN', 'CZK', 'DKK'];
         lcFrom.innerHTML = codes.map(c => `<option ${c === 'EUR' ? 'selected' : ''}>${c}</option>`).join('');
         lcTo.innerHTML = codes.map(c => `<option ${c === 'USD' ? 'selected' : ''}>${c}</option>`).join('');
 
-        const fmtResult = (value, code) =>
-            `= <b>${Number(value).toLocaleString('sr-ME', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${code}</b>`;
+        let rates = null; // kursevi prema EUR
 
-        async function convert() {
+        function convert() {
+            if (!rates) return;
             const amount = Number(lcAmount.value);
             if (!amount || amount <= 0) { lcResult.innerHTML = '&nbsp;'; return; }
-            if (lcFrom.value === lcTo.value) { lcResult.innerHTML = fmtResult(amount, lcTo.value); return; }
+            const value = amount * rates[lcTo.value] / rates[lcFrom.value];
+            lcResult.textContent = value.toLocaleString('sr-ME',
+                { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + lcTo.value;
+        }
+
+        async function loadRates() {
             try {
-                const res = await fetch(`https://api.frankfurter.dev/v1/latest?amount=${amount}&base=${lcFrom.value}&symbols=${lcTo.value}`);
+                const res = await fetch('https://api.frankfurter.dev/v1/latest?base=EUR');
                 if (!res.ok) throw new Error();
                 const data = await res.json();
-                lcResult.innerHTML = fmtResult(data.rates[lcTo.value], lcTo.value);
+                rates = { EUR: 1, ...data.rates };
+                convert();
             } catch (ignored) {
-                lcResult.textContent = 'Kursevi trenutno nisu dostupni';
+                lcResult.textContent = 'Kursevi nisu dostupni';
             }
         }
 
-        let lcTimer;
-        const scheduleConvert = () => { clearTimeout(lcTimer); lcTimer = setTimeout(convert, 350); };
-        [lcAmount, lcFrom, lcTo].forEach(el => el.addEventListener('input', scheduleConvert));
-        convert();
+        [lcAmount, lcFrom, lcTo].forEach(el => el.addEventListener('input', convert));
+        lcSwap.addEventListener('click', () => {
+            const from = lcFrom.value;
+            lcFrom.value = lcTo.value;
+            lcTo.value = from;
+            lcSwap.classList.toggle('flip');
+            convert();
+        });
+        loadRates();
     }
 
     // Lottie animacija novcanika u bento kartici
