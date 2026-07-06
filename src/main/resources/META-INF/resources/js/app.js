@@ -181,9 +181,7 @@ function initLanding() {
     const track = $('#marquee-track');
     track.innerHTML += track.innerHTML;
 
-    // Brojaci u heroju odmah, u sekcijama tek kad dodju u kadar
-    $$('.lp-stats b[data-count]').forEach(countUp);
-
+    // Brojaci u sekcijama krecu tek kad sekcija dodje u kadar
     const observer = new IntersectionObserver(entries => entries.forEach(entry => {
         if (entry.isIntersecting) {
             entry.target.classList.add('in');
