@@ -702,78 +702,32 @@
     pointer-events: none;
 }
 
-/* ---------------- Brojke ---------------- */
-.lp-numbers {
+/* ---------------- Zavrsni CTA ---------------- */
+.lp-cta-band {
     background:
-        radial-gradient(620px 360px at 82% -22%, rgba(63, 224, 143, .13) 0%, transparent 60%),
+        radial-gradient(620px 360px at 82% -22%, rgba(63, 224, 143, .16) 0%, transparent 60%),
         radial-gradient(480px 320px at 8% 118%, rgba(14, 116, 144, .18) 0%, transparent 55%),
         var(--lp-forest);
-    padding: 80px 24px;
+    padding: 92px 24px;
     border-radius: 30px 30px 0 0;
     margin-top: -30px;
     position: relative;
     z-index: 2;
 }
 
-.lp-numbers-head { max-width: 1000px; margin: 0 auto 34px; }
-.lp-numbers-head h2 {
+.lp-cta-inner { max-width: 640px; margin: 0 auto; text-align: center; }
+
+.lp-cta-inner h2 {
     font-family: var(--lp-font-display);
-    font-size: clamp(26px, 3.4vw, 36px);
+    font-size: clamp(30px, 4.4vw, 44px);
     font-weight: 800;
-    letter-spacing: -.02em;
-    color: var(--lp-text);
+    letter-spacing: -.025em;
+    line-height: 1.1;
+    color: #ffffff;
 }
+.lp-cta-inner p { font-size: 15px; color: var(--lp-text-2); margin-top: 14px; }
 
-.lp-numbers-inner {
-    max-width: 1000px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-}
-
-.lp-number {
-    position: relative;
-    background: rgba(255, 255, 255, .04);
-    border: 1px solid rgba(63, 224, 143, .14);
-    border-radius: 18px;
-    padding: 24px 22px 22px;
-    overflow: hidden;
-    transition: transform .18s, border-color .18s, background .18s;
-}
-.lp-number:hover { transform: translateY(-3px); border-color: rgba(63, 224, 143, .32); background: rgba(255, 255, 255, .06); }
-
-.lp-number::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 12%; right: 12%;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(63, 224, 143, .65), transparent);
-}
-
-.lp-number-ico {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px; height: 36px;
-    border-radius: 11px;
-    background: var(--lp-mint-soft);
-    border: 1px solid var(--lp-mint-line);
-    margin-bottom: 14px;
-}
-.lp-number-ico svg { width: 17px; height: 17px; stroke: var(--lp-mint); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-
-.lp-number b {
-    display: block;
-    font-family: var(--lp-font-display);
-    font-size: clamp(32px, 4vw, 44px);
-    font-weight: 800;
-    letter-spacing: -.02em;
-    color: var(--lp-mint);
-    font-variant-numeric: tabular-nums;
-    line-height: 1.05;
-}
-.lp-number span { font-size: 13px; color: var(--lp-text-2); display: block; margin-top: 5px; }
+.lp-cta-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 30px; }
 
 /* ---------------- Footer ---------------- */
 .lp-footer {

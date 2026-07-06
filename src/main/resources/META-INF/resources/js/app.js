@@ -171,12 +171,15 @@ function initLanding() {
         $('#' + btn.dataset.target).scrollIntoView({ behavior: 'smooth', block: 'start' })));
 
     // "Probaj demo" - popuni demo kredencijale i odmah prijavi
-    $('#cta-demo').addEventListener('click', () => {
+    const startDemo = () => {
         const form = $('#login-form');
         form.elements.email.value = 'demo@pfm.me';
         form.elements.password.value = 'demo123';
         form.requestSubmit();
-    });
+    };
+    $('#cta-demo').addEventListener('click', startDemo);
+    $('#cta-demo-bottom').addEventListener('click', startDemo);
+    $('#cta-open-bottom').addEventListener('click', () => goToForm('register'));
 
     // Marquee: dupliraj sadrzaj da petlja bude besavna
     const track = $('#marquee-track');
