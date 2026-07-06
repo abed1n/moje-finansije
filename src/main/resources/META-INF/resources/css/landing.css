@@ -79,6 +79,21 @@
 .btn-mint:hover { background: #5ceaa2; }
 .btn-mint:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(63, 224, 143, .35); }
 
+.btn-white {
+    background: #ffffff;
+    color: #0c111d;
+    font-weight: 700;
+    border: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .3);
+    transition: background .15s, box-shadow .18s, transform .18s;
+}
+.btn-white:hover {
+    background: #f2fdf8;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, .38), 0 0 34px rgba(63, 224, 143, .22);
+}
+.btn-white:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(63, 224, 143, .4); }
+
 .btn-outline-light {
     background: transparent;
     color: var(--lp-text);
