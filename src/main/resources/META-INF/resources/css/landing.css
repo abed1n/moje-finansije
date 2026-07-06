@@ -17,12 +17,12 @@
     --lp-font-display: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
 }
 
+/* Bez overflow pravila ovdje — prekinula bi position:sticky na nav-u.
+   Horizontalni overflow je sprijecen na izvorima (hero i marquee imaju overflow:hidden). */
 .auth-screen {
     min-height: 100vh;
     background: var(--lp-ink);
     color: var(--lp-text);
-    overflow-y: auto;
-    overflow-x: hidden;
 }
 
 /* ---------------- Navigacija ---------------- */
