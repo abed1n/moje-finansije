@@ -623,7 +623,7 @@
 .lp-photo {
     background: #ffffff;
     color: var(--text);
-    padding: 88px 24px;
+    padding: 88px 24px 136px;
 }
 
 .lp-photo-inner {
