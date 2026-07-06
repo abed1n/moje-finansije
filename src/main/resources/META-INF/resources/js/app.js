@@ -164,6 +164,7 @@ function initLanding() {
         $('#auth-panel').scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
     $('#nav-open').addEventListener('click', () => goToForm('register'));
+    $('#nav-brand').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
     // Skrolanje do sekcija (nav, footer i CTA dugmad sa data-target)
     $$('.lp-scroll[data-target]').forEach(btn => btn.addEventListener('click', () =>
