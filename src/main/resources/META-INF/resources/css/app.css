@@ -486,6 +486,13 @@ tbody tr:hover { background: var(--surface-2); }
 .chart-legend .dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
 .chart-legend .legend-value { margin-left: auto; font-weight: 700; font-variant-numeric: tabular-nums; font-size: 12.5px; }
 
+.legend-row.clickable { cursor: pointer; margin: 0 -7px; padding: 3px 7px; border-radius: 8px; transition: background .12s; }
+.legend-row.clickable:hover { background: var(--surface-2); }
+
+.drill-head { display: flex; align-items: center; gap: 9px; font-size: 13.5px; margin-bottom: 8px; }
+.drill-head .dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.drill-head b { font-variant-numeric: tabular-nums; }
+
 .doughnut-wrap { display: flex; align-items: center; gap: 26px; }
 
 /* Budzeti */

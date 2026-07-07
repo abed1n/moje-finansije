@@ -13,7 +13,7 @@ public record DashboardDto(BigDecimal totalBalance,
                            List<TransactionDto> recentTransactions,
                            List<BudgetDto> budgets) {
 
-    public record CategorySpending(String name, String color, BigDecimal amount) {
+    public record CategorySpending(Long id, String name, String color, BigDecimal amount) {
     }
 
     public record MonthlyFlow(String month, BigDecimal income, BigDecimal expense) {

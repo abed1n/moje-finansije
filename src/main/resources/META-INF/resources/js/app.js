@@ -532,7 +532,8 @@ function svgDoughnut(items, centerLabel = 'EUR · ovaj mjesec') {
         return c;
     }).join('');
     const legend = items.map(it => `
-        <div class="legend-row">
+        <div class="legend-row ${it.id != null ? 'clickable' : ''}"${it.id != null
+            ? ` data-id="${it.id}" data-name="${esc(it.name)}" data-color="${esc(it.color)}" title="Detalji kategorije"` : ''}>
             <span class="dot" style="background:${esc(it.color)}"></span>
             <span class="name">${esc(it.name)}</span>
             <span class="legend-value">${fmtMoney(it.amount)}</span>
@@ -720,9 +721,103 @@ async function renderDashboard() {
         renderDashboard();
     }));
 
+    $$('#view .legend-row.clickable').forEach(row => row.addEventListener('click', () =>
+        openCategoryDrill({
+            id: Number(row.dataset.id),
+            name: row.dataset.name,
+            color: row.dataset.color
+        })));
+
     $('#dash-add-tx').addEventListener('click', async () => {
         await loadRefs();
         openTransactionModal(null, () => route());
+    });
+}
+
+// Drill-down: detalji potrosnje za jednu kategoriju
+function svgMiniBars(points, color) {
+    const max = niceCeil(Math.max(...points.map(p => p.value), 1));
+    const maxValue = Math.max(...points.map(p => p.value));
+    const W = 480, H = 170, padL = 8, padR = 8, padT = 24, padB = 24;
+    const chartH = H - padT - padB;
+    const baseline = H - padB;
+    const slot = (W - padL - padR) / points.length;
+    const barW = Math.min(36, slot * 0.5);
+
+    const bars = points.map((p, i) => {
+        const x = padL + i * slot + (slot - barW) / 2;
+        const h = Math.max(p.value / max * chartH, p.value > 0 ? 2 : 0);
+        // Selektivna oznaka: vrijednost samo na najvisem stubicu
+        const topLabel = p.value > 0 && p.value === maxValue
+            ? `<text x="${x + barW / 2}" y="${baseline - h - 7}" text-anchor="middle" font-size="10.5" font-weight="600" style="fill:var(--text-2);font-variant-numeric:tabular-nums">${Math.round(p.value)}</text>`
+            : '';
+        return `${h ? `<path d="${barPath(x, baseline - h, barW, h, 4)}" fill="${color}"><title>${esc(p.label)}: ${fmtMoney(p.value)}</title></path>` : ''}
+            ${topLabel}
+            <text x="${padL + i * slot + slot / 2}" y="${H - 7}" text-anchor="middle" font-size="10.5" style="fill:var(--text-3)">${esc(p.label)}</text>`;
+    }).join('');
+
+    return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block" role="img" aria-label="Potrošnja po mjesecima">
+        <line x1="${padL}" y1="${baseline}" x2="${W - padR}" y2="${baseline}" style="stroke:var(--chart-axis)"></line>
+        ${bars}
+    </svg>`;
+}
+
+async function openCategoryDrill(cat) {
+    const body = openModal(cat.name,
+        '<div class="loading-state"><span class="spinner"></span>Učitavanje...</div>');
+
+    const start = new Date();
+    start.setDate(1);
+    start.setMonth(start.getMonth() - 5);
+    const fromStr = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-01`;
+
+    let transactions;
+    try {
+        transactions = await api(`/api/transactions?categoryId=${cat.id}&from=${fromStr}`);
+    } catch (err) {
+        body.innerHTML = `<p class="muted">${esc(err.message)}</p>`;
+        return;
+    }
+
+    const now = new Date();
+    const months = [];
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        months.push({ ym, label: fmtMonth(ym), value: 0 });
+    }
+    transactions.forEach(t => {
+        const bucket = months.find(m => m.ym === t.date.slice(0, 7));
+        if (bucket) bucket.value += Number(t.amount);
+    });
+    const total = months.reduce((sum, m) => sum + m.value, 0);
+    const recent = transactions.slice(0, 5);
+
+    body.innerHTML = `
+        <div class="drill-head">
+            <span class="dot" style="background:${esc(cat.color)}"></span>
+            Potrošeno u zadnjih 6 mjeseci: <b>${fmtMoney(total)}</b>
+        </div>
+        ${svgMiniBars(months.map(m => ({ label: m.label, value: m.value })), cat.color)}
+        <div style="margin-top:14px">
+            <span style="font-size:12.5px;font-weight:600;color:var(--text-2)">Posljednje transakcije</span>
+            ${recent.length ? `<div class="table-wrap"><table><tbody>${recent.map(t => `
+                <tr>
+                    <td>${fmtDate(t.date)}</td>
+                    <td>${esc(t.description || '-')}</td>
+                    <td class="muted">${esc(t.accountName)}</td>
+                    <td class="amount expense" style="text-align:right">-${fmtMoney(t.amount)}</td>
+                </tr>`).join('')}</tbody></table></div>`
+            : '<p class="muted" style="font-size:13px;margin-top:6px">Nema transakcija u ovom periodu.</p>'}
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-secondary" id="drill-all" type="button">Prikaži sve u transakcijama</button>
+        </div>`;
+
+    $('#drill-all', body).addEventListener('click', () => {
+        closeModal();
+        state.categoryFilter = cat.id;
+        location.hash = '#/transactions';
     });
 }
 
@@ -901,6 +996,12 @@ async function renderTransactions() {
     $('#add-tx').addEventListener('click', () => openTransactionModal(null, loadTable));
     $('#tx-export').addEventListener('click', exportCsv);
     $('#tx-recurring').addEventListener('click', openRecurringModal);
+
+    // Filter prenesen iz drill-down pregleda kategorije
+    if (state.categoryFilter) {
+        $('#f-category').value = String(state.categoryFilter);
+        state.categoryFilter = null;
+    }
     await loadTable();
 }
 

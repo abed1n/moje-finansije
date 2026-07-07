@@ -59,10 +59,10 @@ public class DashboardService {
 
     private List<DashboardDto.CategorySpending> spendingByCategory(User user, LocalDate from, LocalDate to) {
         List<Object[]> rows = em.createQuery(
-                        "select c.name, c.color, sum(t.amount) from Transaction t left join t.category c"
+                        "select c.id, c.name, c.color, sum(t.amount) from Transaction t left join t.category c"
                                 + " where t.account.user.id = :userId and t.type = :type"
                                 + " and t.date >= :fromDate and t.date <= :toDate"
-                                + " group by c.name, c.color order by sum(t.amount) desc", Object[].class)
+                                + " group by c.id, c.name, c.color order by sum(t.amount) desc", Object[].class)
                 .setParameter("userId", user.getId())
                 .setParameter("type", TransactionType.EXPENSE)
                 .setParameter("fromDate", from)
@@ -70,9 +70,10 @@ public class DashboardService {
                 .getResultList();
         return rows.stream()
                 .map(row -> new DashboardDto.CategorySpending(
-                        row[0] != null ? (String) row[0] : "Bez kategorije",
-                        row[1] != null ? (String) row[1] : "#94a3b8",
-                        (BigDecimal) row[2]))
+                        (Long) row[0],
+                        row[1] != null ? (String) row[1] : "Bez kategorije",
+                        row[2] != null ? (String) row[2] : "#94a3b8",
+                        (BigDecimal) row[3]))
                 .toList();
     }
 
