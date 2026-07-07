@@ -715,17 +715,44 @@ th.sortable .sort-arrow { font-size: 8.5px; margin-left: 4px; }
 .pager-page { font-size: 12.5px; font-weight: 600; color: var(--text-2); font-variant-numeric: tabular-nums; }
 
 /* =========================================================
-   Upozorenja za budzete
+   Centar obavjestenja
    ========================================================= */
-.alert-row { padding: 12px 0; border-bottom: 1px solid var(--border); }
-.alert-row:last-child { border-bottom: 0; padding-bottom: 0; }
-.alert-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 13.5px; }
-.alert-head strong { font-weight: 600; }
-.alert-head .pct { font-weight: 700; font-variant-numeric: tabular-nums; }
-.alert-head .pct.warn { color: #b45309; }
-.alert-head .pct.over { color: var(--danger); }
-:root[data-theme="dark"] .alert-head .pct.warn { color: var(--status-warn); }
-.alert-sub { font-size: 12px; color: var(--text-3); margin-top: 2px; font-variant-numeric: tabular-nums; }
+.notif-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 4px;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    background: none;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    border-radius: 8px;
+}
+.notif-row:last-child { border-bottom: 0; }
+.notif-row:hover { background: var(--surface-2); }
+.notif-ico {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    background: var(--surface-2);
+}
+.notif-ico .ico { width: 18px; height: 18px; stroke: var(--text-2); }
+.notif-row.warn .notif-ico { background: rgba(180, 83, 9, .12); }
+.notif-row.warn .notif-ico .ico { stroke: #b45309; }
+.notif-row.over .notif-ico { background: rgba(227, 73, 72, .12); }
+.notif-row.over .notif-ico .ico { stroke: var(--danger); }
+:root[data-theme="dark"] .notif-row.warn .notif-ico .ico { stroke: var(--status-warn); }
+.notif-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.notif-body b { font-size: 13.5px; font-weight: 600; }
+.notif-body span { font-size: 12.5px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.notif-go { flex: 0 0 auto; stroke: var(--text-3); }
 .alert-ok { text-align: center; padding: 22px 0 8px; color: var(--text-2); font-size: 13.5px; }
 .alert-ok .ico { width: 30px; height: 30px; stroke: var(--status-good); display: block; margin: 0 auto 10px; }
 

@@ -37,6 +37,9 @@ public class User {
     @Column(nullable = false)
     private Instant createdAt = Instant.now();
 
+    // Kad je posljednji put uvezen bankovni izvod (za podsjetnik)
+    private Instant lastImportAt;
+
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "profile_id")
     private Profile profile;
@@ -111,6 +114,14 @@ public class User {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Instant getLastImportAt() {
+        return lastImportAt;
+    }
+
+    public void setLastImportAt(Instant lastImportAt) {
+        this.lastImportAt = lastImportAt;
     }
 
     public Profile getProfile() {

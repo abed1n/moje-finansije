@@ -111,6 +111,7 @@ public class ImportService {
         }
         int created = 0;
         int learned = 0;
+        em.find(User.class, user.getId()).setLastImportAt(java.time.Instant.now());
         for (ImportConfirmRequest.Row row : request.rows()) {
             if (row.transferAccountId() != null) {
                 // Red je prebacivanje izmedju vlastitih racuna: rashod znaci "otislo NA drugi

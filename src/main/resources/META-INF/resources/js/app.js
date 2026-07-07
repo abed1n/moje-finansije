@@ -66,7 +66,9 @@ const ICONS = {
     user: '<circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>',
     shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
     logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
-    transfer: '<path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/>'
+    transfer: '<path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/>',
+    target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+    flag: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/>'
 };
 
 function icon(name, cls = 'ico') {
@@ -163,41 +165,112 @@ $('#bell-btn').addEventListener('click', openAlertsModal);
 $('#theme-btn').addEventListener('click', toggleTheme);
 $('#mobile-more').addEventListener('click', openMoreSheet);
 
-// Upozorenja: budzeti koji su presli 80% limita
-let budgetAlerts = [];
+// Centar obavjestenja: podsjetnik za izvod, budzeti 80%+, rokovi ciljeva, racuni u minusu
+let notifications = [];
+
+const MONTH_NAMES = ['januar', 'februar', 'mart', 'april', 'maj', 'jun',
+    'jul', 'avgust', 'septembar', 'oktobar', 'novembar', 'decembar'];
 
 async function refreshAlerts() {
     if (!state.token) return;
     try {
-        const budgets = await api('/api/budgets');
-        budgetAlerts = budgets
-            .filter(b => b.percentUsed >= 80)
-            .sort((a, b) => b.percentUsed - a.percentUsed);
+        const [budgets, goals, accounts, importStatus] = await Promise.all([
+            api('/api/budgets'), api('/api/goals'), api('/api/accounts'), api('/api/import/status')
+        ]);
+        notifications = [];
+
+        // 1. Podsjetnik za izvod: nijedan uvoz u tekucem mjesecu
+        const now = new Date();
+        const last = importStatus.lastImportAt ? new Date(importStatus.lastImportAt) : null;
+        const importedThisMonth = last
+            && last.getMonth() === now.getMonth() && last.getFullYear() === now.getFullYear();
+        if (accounts.length && !importedThisMonth) {
+            const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            notifications.push({
+                kind: 'statement', icon: 'upload',
+                title: 'Vrijeme je za izvod',
+                text: `Uvezite bankovni izvod za ${MONTH_NAMES[prev.getMonth()]} — kategorije se popune same.`,
+                action: 'import'
+            });
+        }
+
+        // 2. Budzeti preko 80% limita
+        budgets.filter(b => b.percentUsed >= 80)
+            .sort((a, b) => b.percentUsed - a.percentUsed)
+            .forEach(b => {
+                const over = b.percentUsed >= 100;
+                notifications.push({
+                    kind: over ? 'over' : 'warn', icon: 'target',
+                    title: `${b.name} — ${b.percentUsed}%`,
+                    text: over
+                        ? `Limit je probijen: ${fmtMoney(b.spent)} od ${fmtMoney(b.limitAmount)}.`
+                        : `Blizu limita: ${fmtMoney(b.spent)} od ${fmtMoney(b.limitAmount)}.`,
+                    action: 'budgets'
+                });
+            });
+
+        // 3. Ciljevi kojima istice rok
+        goals.filter(g => !g.achieved && g.deadline).forEach(g => {
+            const days = Math.ceil((new Date(g.deadline) - now) / 86400000);
+            if (days < 0) {
+                notifications.push({
+                    kind: 'over', icon: 'flag',
+                    title: `${g.name} — rok je istekao`,
+                    text: `Do cilja je nedostajalo još ${fmtMoney(g.remaining)}.`,
+                    action: 'budgets'
+                });
+            } else if (days <= 14) {
+                notifications.push({
+                    kind: 'warn', icon: 'flag',
+                    title: `${g.name} — još ${days} ${days === 1 ? 'dan' : 'dana'}`,
+                    text: `Do cilja nedostaje ${fmtMoney(g.remaining)}.`,
+                    action: 'budgets'
+                });
+            }
+        });
+
+        // 4. Racuni u minusu
+        accounts.filter(a => Number(a.balance) < 0).forEach(a => {
+            notifications.push({
+                kind: 'over', icon: 'wallet',
+                title: `${a.name} je u minusu`,
+                text: `Trenutno stanje: ${fmtMoney(a.balance, a.currency)}.`,
+                action: 'accounts'
+            });
+        });
+
         const badge = $('#bell-badge');
-        badge.textContent = budgetAlerts.length;
-        badge.classList.toggle('hidden', budgetAlerts.length === 0);
-    } catch (ignored) { /* upozorenja nisu kriticna za rad aplikacije */ }
+        badge.textContent = notifications.length;
+        badge.classList.toggle('hidden', notifications.length === 0);
+    } catch (ignored) { /* obavjestenja nisu kriticna za rad aplikacije */ }
 }
 
 function openAlertsModal() {
-    const rows = budgetAlerts.map(b => {
-        const over = b.percentUsed >= 100;
-        return `<div class="alert-row">
-            <div class="alert-head">
-                <strong>${esc(b.name)}</strong>
-                <span class="pct ${over ? 'over' : 'warn'}">${b.percentUsed}%</span>
-            </div>
-            <div class="budget-bar"><div class="budget-bar-fill ${over ? 'over' : 'warn'}" style="width:${Math.min(b.percentUsed, 100)}%"></div></div>
-            <div class="alert-sub">${fmtMoney(b.spent)} od ${fmtMoney(b.limitAmount)}${over ? ' — limit je probijen' : ''}</div>
-        </div>`;
-    }).join('');
+    const rows = notifications.map((n, i) => `
+        <button class="notif-row ${n.kind}" data-i="${i}" type="button">
+            <span class="notif-ico">${icon(n.icon)}</span>
+            <span class="notif-body">
+                <b>${esc(n.title)}</b>
+                <span>${esc(n.text)}</span>
+            </span>
+            ${icon('chevRight', 'ico ico-sm notif-go')}
+        </button>`).join('');
 
-    const body = openModal('Upozorenja za budžete', budgetAlerts.length
-        ? rows + `<div class="form-actions"><button class="btn btn-secondary" id="alerts-goto" type="button">Otvori budžete</button></div>`
-        : `<div class="alert-ok"><svg class="ico" viewBox="0 0 24 24">${ICONS.check}</svg>Svi budžeti su u zelenom — nijedan nije prešao 80% limita.</div>`);
+    const body = openModal('Obavještenja', notifications.length
+        ? rows
+        : `<div class="alert-ok"><svg class="ico" viewBox="0 0 24 24">${ICONS.check}</svg>Sve je pod kontrolom — nema novih obavještenja.</div>`);
 
-    const goto = $('#alerts-goto', body);
-    if (goto) goto.addEventListener('click', () => { closeModal(); location.hash = '#/budgets'; });
+    $$('.notif-row', body).forEach(row => row.addEventListener('click', () => {
+        const n = notifications[Number(row.dataset.i)];
+        closeModal();
+        if (n.action === 'import') {
+            state.openImport = true;
+            if (location.hash === '#/transactions') route();
+            else location.hash = '#/transactions';
+        } else {
+            location.hash = '#/' + n.action;
+        }
+    }));
 }
 
 // "Jos" sheet na mobilnoj navigaciji
@@ -1040,6 +1113,12 @@ async function renderTransactions() {
         state.categoryFilter = null;
     }
     await loadTable();
+
+    // Dosli smo preko obavjestenja "Vrijeme je za izvod" - odmah otvori uvoz
+    if (state.openImport) {
+        state.openImport = false;
+        openImportModal(loadTable);
+    }
 }
 
 // Uvoz bankovnog izvoda: upload CSV-a, pregled sa predlozima kategorija, potvrda

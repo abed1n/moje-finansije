@@ -5,6 +5,7 @@ import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -20,6 +21,7 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.util.Map;
 
 // Uvoz bankovnog izvoda: prvo pregled sa predlozima, pa potvrda
 @Path("/api/import")
@@ -56,5 +58,14 @@ public class ImportResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public ImportResultDto confirmImport(@Valid ImportConfirmRequest request) {
         return importService.confirmImport(currentUser.require(), request);
+    }
+
+    // Kad je posljednji put uvezen izvod - za podsjetnik u centru obavjestenja
+    @GET
+    @Path("/status")
+    public Map<String, Object> importStatus() {
+        var lastImportAt = currentUser.require().getLastImportAt();
+        return java.util.Collections.singletonMap("lastImportAt",
+                lastImportAt != null ? lastImportAt.toString() : null);
     }
 }
