@@ -14,5 +14,6 @@ public record ImportRowDto(
         TransactionType type,
         Long suggestedCategoryId,
         String suggestedCategoryName,
-        boolean duplicate) {
+        boolean duplicate,
+        boolean possibleTransfer) {
 }

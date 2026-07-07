@@ -1086,11 +1086,23 @@ function openImportModal(onDone) {
 }
 
 function renderImportPreview(body, accountId, preview, onDone) {
-    const categoryOptions = (type, selectedId) =>
-        '<option value="">Bez kategorije</option>' + state.categories
-            .filter(c => c.type === type)
-            .map(c => `<option value="${c.id}" ${c.id === selectedId ? 'selected' : ''}>${esc(c.name)}</option>`)
+    const otherAccounts = state.accounts.filter(a => a.id !== accountId);
+
+    // Pored kategorija, red se moze oznaciti kao prebacivanje na/sa drugog racuna
+    const categoryOptions = (row) => {
+        const categories = '<option value="">Bez kategorije</option>' + state.categories
+            .filter(c => c.type === row.type)
+            .map(c => `<option value="${c.id}" ${c.id === row.suggestedCategoryId ? 'selected' : ''}>${esc(c.name)}</option>`)
             .join('');
+        if (!otherAccounts.length) {
+            return categories;
+        }
+        const label = row.type === 'EXPENSE' ? 'Prebačeno na' : 'Primljeno sa';
+        const preselect = row.possibleTransfer && !row.suggestedCategoryId && otherAccounts.length === 1;
+        const transfers = `<optgroup label="Prebacivanje (nije trošak ni prihod)">${otherAccounts.map(a =>
+            `<option value="t:${a.id}" ${preselect ? 'selected' : ''}>${label}: ${esc(a.name)}</option>`).join('')}</optgroup>`;
+        return categories + transfers;
+    };
 
     const duplicates = preview.rows.filter(r => r.duplicate).length;
 
@@ -1108,9 +1120,9 @@ function renderImportPreview(body, accountId, preview, onDone) {
                 <tr class="${r.duplicate ? 'dup' : ''}" data-i="${i}">
                     <td><input type="checkbox" class="imp-inc" ${r.duplicate ? '' : 'checked'}></td>
                     <td style="white-space:nowrap">${fmtDate(r.date)}</td>
-                    <td>${esc(r.description || '-')}${r.duplicate ? ' <span class="chip dup-chip">duplikat</span>' : ''}</td>
+                    <td>${esc(r.description || '-')}${r.duplicate ? ' <span class="chip dup-chip">duplikat</span>' : ''}${r.possibleTransfer && !r.duplicate ? ' <span class="chip tr-chip">liči na prebacivanje</span>' : ''}</td>
                     <td class="amount ${r.type === 'INCOME' ? 'income' : 'expense'}" style="text-align:right;white-space:nowrap">${r.type === 'INCOME' ? '+' : '-'}${fmtMoney(r.amount)}</td>
-                    <td><select class="imp-cat">${categoryOptions(r.type, r.suggestedCategoryId)}</select></td>
+                    <td><select class="imp-cat">${categoryOptions(r)}</select></td>
                 </tr>`).join('')}</tbody>
         </table>
         </div>
@@ -1129,13 +1141,15 @@ function renderImportPreview(body, accountId, preview, onDone) {
         $$('.import-table tbody tr', body).forEach(tr => {
             if (!tr.querySelector('.imp-inc').checked) return;
             const r = preview.rows[Number(tr.dataset.i)];
-            const catValue = tr.querySelector('.imp-cat').value;
+            const selected = tr.querySelector('.imp-cat').value;
+            const isTransfer = selected.startsWith('t:');
             rows.push({
                 date: r.date,
                 description: r.description,
                 amount: r.amount,
                 type: r.type,
-                categoryId: catValue ? Number(catValue) : null
+                categoryId: !isTransfer && selected ? Number(selected) : null,
+                transferAccountId: isTransfer ? Number(selected.slice(2)) : null
             });
         });
         if (!rows.length) {

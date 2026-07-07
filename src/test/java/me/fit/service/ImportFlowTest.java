@@ -38,6 +38,9 @@ class ImportFlowTest {
     TransactionService transactionService;
 
     @Inject
+    TransferService transferService;
+
+    @Inject
     EntityManager em;
 
     @Test
@@ -94,7 +97,7 @@ class ImportFlowTest {
         ImportResultDto result = importService.confirmImport(user, new ImportConfirmRequest(
                 account.id(), true, List.of(new ImportConfirmRequest.Row(
                         day2, "NEPOZNATO XYZ", new BigDecimal("10.00"),
-                        TransactionType.EXPENSE, zabava.getId()))));
+                        TransactionType.EXPENSE, zabava.getId(), null))));
         assertEquals(1, result.created());
         assertEquals(1, result.rulesLearned());
 
@@ -104,5 +107,47 @@ class ImportFlowTest {
         ImportRowDto learned = second.rows().get(2);
         assertEquals("Zabava", learned.suggestedCategoryName(), "Nauceno pravilo mora da vazi");
         assertTrue(learned.duplicate());
+    }
+
+    @Test
+    @Transactional
+    void red_izvoda_moze_biti_prebacivanje_izmedju_racuna() {
+        String email = "imptr-" + System.nanoTime() + "@pfm.me";
+        authService.register(new RegisterRequest("Import Transfer", email, "lozinka123"));
+        User user = em.createNamedQuery(User.GET_BY_EMAIL, User.class)
+                .setParameter("email", email)
+                .getSingleResult();
+        AccountDto checking = accountService.createAccount(user, new AccountRequest(
+                "Tekući", AccountType.CHECKING, "EUR", new BigDecimal("500.00"), null));
+        AccountDto savings = accountService.createAccount(user, new AccountRequest(
+                "Štednja", AccountType.SAVINGS, "EUR", BigDecimal.ZERO, null));
+
+        LocalDate day = LocalDate.now().minusDays(1);
+        String csv = "Datum;Opis;Iznos\n" + day.format(BANK_DATE) + ";PRENOS NA STEDNI RACUN;-200,00\n";
+
+        ImportPreviewDto preview = importService.preview(user, checking.id(),
+                new ByteArrayInputStream(csv.getBytes(StandardCharsets.UTF_8)));
+        assertTrue(preview.rows().getFirst().possibleTransfer(),
+                "Opis sa PRENOS mora biti prepoznat kao moguce prebacivanje");
+
+        importService.confirmImport(user, new ImportConfirmRequest(checking.id(), false,
+                List.of(new ImportConfirmRequest.Row(day, "PRENOS NA STEDNI RACUN",
+                        new BigDecimal("200.00"), TransactionType.EXPENSE, null, savings.id()))));
+
+        em.flush();
+        em.clear();
+        assertEquals(0, em.find(me.fit.model.Account.class, checking.id()).getBalance()
+                .compareTo(new BigDecimal("300.00")));
+        assertEquals(0, em.find(me.fit.model.Account.class, savings.id()).getBalance()
+                .compareTo(new BigDecimal("200.00")));
+        assertEquals(1, transferService.getTransfers(user, 20).size());
+
+        // Prebacivanje ne smije uci u rashode
+        assertEquals(0, transactionService.getTransactions(user, null, null, null, null, null, null, 50).size());
+
+        // Ponovni uvoz istog izvoda: red je sada duplikat
+        ImportPreviewDto second = importService.preview(user, checking.id(),
+                new ByteArrayInputStream(csv.getBytes(StandardCharsets.UTF_8)));
+        assertTrue(second.rows().getFirst().duplicate());
     }
 }

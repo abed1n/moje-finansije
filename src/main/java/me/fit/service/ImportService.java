@@ -64,6 +64,9 @@ public class ImportService {
     @Inject
     TransactionService transactionService;
 
+    @Inject
+    TransferService transferService;
+
     public record ParsedRow(int line, LocalDate date, String description, BigDecimal amount,
                             TransactionType type) {
     }
@@ -94,7 +97,8 @@ public class ImportService {
             return new ImportRowDto(row.line(), row.date(), row.description(), row.amount(), row.type(),
                     suggested != null ? suggested.getId() : null,
                     suggested != null ? suggested.getName() : null,
-                    duplicate);
+                    duplicate,
+                    looksLikeTransfer(row.description()));
         }).toList();
 
         return new ImportPreviewDto(rows, skipped);
@@ -108,6 +112,17 @@ public class ImportService {
         int created = 0;
         int learned = 0;
         for (ImportConfirmRequest.Row row : request.rows()) {
+            if (row.transferAccountId() != null) {
+                // Red je prebacivanje izmedju vlastitih racuna: rashod znaci "otislo NA drugi
+                // racun", prihod znaci "doslo SA drugog racuna"
+                boolean outgoing = row.type() == TransactionType.EXPENSE;
+                transferService.createTransfer(user, new TransferRequest(
+                        row.amount(), row.date(), row.description(),
+                        outgoing ? request.accountId() : row.transferAccountId(),
+                        outgoing ? row.transferAccountId() : request.accountId()));
+                created++;
+                continue;
+            }
             transactionService.createTransaction(user, new TransactionRequest(
                     row.amount(), row.date(), row.type(), row.description(),
                     request.accountId(), row.categoryId(), null));
@@ -119,6 +134,13 @@ public class ImportService {
             }
         }
         return new ImportResultDto(created, learned);
+    }
+
+    // "PRENOS NA RACUN..." u opisu obicno znaci prebacivanje izmedju vlastitih racuna
+    static boolean looksLikeTransfer(String description) {
+        String normalized = normalize(description);
+        return normalized.contains("PRENOS") || normalized.contains("PRIJENOS")
+                || normalized.contains("TRANSFER") || normalized.contains("PREBACIVANJE");
     }
 
     // ---------- kategorizacija ----------
@@ -201,6 +223,8 @@ public class ImportService {
     private Set<String> existingTransactionKeys(User user, Account account, List<ParsedRow> parsed) {
         LocalDate min = parsed.stream().map(ParsedRow::date).min(LocalDate::compareTo).orElseThrow();
         LocalDate max = parsed.stream().map(ParsedRow::date).max(LocalDate::compareTo).orElseThrow();
+        Set<String> keys = new HashSet<>();
+
         List<Transaction> existing = em.createQuery(
                         "select t from Transaction t where t.account.id = :accountId"
                                 + " and t.date >= :min and t.date <= :max", Transaction.class)
@@ -208,9 +232,23 @@ public class ImportService {
                 .setParameter("min", min)
                 .setParameter("max", max)
                 .getResultList();
-        Set<String> keys = new HashSet<>();
         for (Transaction t : existing) {
             keys.add(transactionKey(t.getDate(), t.getAmount(), t.getType()));
+        }
+
+        // I vec zabiljezena prebacivanja su duplikati: odliv sa racuna izgleda kao
+        // rashod u izvodu, priliv kao prihod
+        List<Transfer> transfers = em.createQuery(
+                        "select t from Transfer t where (t.fromAccount.id = :accountId or t.toAccount.id = :accountId)"
+                                + " and t.date >= :min and t.date <= :max", Transfer.class)
+                .setParameter("accountId", account.getId())
+                .setParameter("min", min)
+                .setParameter("max", max)
+                .getResultList();
+        for (Transfer t : transfers) {
+            TransactionType type = t.getFromAccount().getId().equals(account.getId())
+                    ? TransactionType.EXPENSE : TransactionType.INCOME;
+            keys.add(transactionKey(t.getDate(), t.getAmount(), type));
         }
         return keys;
     }

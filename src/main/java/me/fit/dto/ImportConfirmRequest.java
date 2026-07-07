@@ -20,6 +20,8 @@ public record ImportConfirmRequest(
             String description,
             @NotNull @Positive BigDecimal amount,
             @NotNull TransactionType type,
-            Long categoryId) {
+            Long categoryId,
+            // Ako je postavljen, red je prebacivanje na/sa ovog racuna umjesto transakcije
+            Long transferAccountId) {
     }
 }
