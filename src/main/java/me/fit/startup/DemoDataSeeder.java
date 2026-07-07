@@ -58,6 +58,9 @@ public class DemoDataSeeder {
     @Inject
     TransferService transferService;
 
+    @Inject
+    GoalService goalService;
+
     void onStart(@Observes StartupEvent event) {
         if (!seedEnabled) {
             return;
@@ -144,6 +147,11 @@ public class DemoDataSeeder {
         recurringService.createRule(demo, new RecurringRequest(
                 new BigDecimal("650.00"), TransactionType.EXPENSE, "Kirija za stan",
                 3, checking.id(), categories.get("Stanovanje").id()));
+
+        // Cilj stednje sa napretkom
+        GoalDto ljetovanje = goalService.createGoal(demo, new GoalRequest(
+                "Ljetovanje", new BigDecimal("1500.00"), today.plusMonths(2).withDayOfMonth(15)));
+        goalService.deposit(demo, ljetovanje.id(), new BigDecimal("620.00"));
     }
 
     private void addIfPast(User user, LocalDate today, LocalDate date, BigDecimal amount,

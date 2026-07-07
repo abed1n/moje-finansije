@@ -712,6 +712,17 @@ th.sortable .sort-arrow { font-size: 8.5px; margin-left: 4px; }
 .rec-info span { font-size: 12px; color: var(--text-3); }
 .rec-amount { font-weight: 700; font-variant-numeric: tabular-nums; font-size: 13.5px; white-space: nowrap; }
 
+/* Ciljevi stednje */
+.budget-bar-fill.goal-fill { background: linear-gradient(90deg, var(--brand), #0e7490); }
+.goal-card.done { border-color: rgba(5, 150, 105, .35); }
+.goal-done-chip { background: var(--brand-soft); border-color: rgba(5, 150, 105, .3); color: var(--brand-600); }
+.goal-done-chip .ico { width: 12px; height: 12px; stroke-width: 3; }
+:root[data-theme="dark"] .goal-done-chip { color: #34d399; }
+
+.quick-amounts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.quick-amounts .qa { cursor: pointer; font-family: inherit; transition: border-color .14s, color .14s, background .14s; }
+.quick-amounts .qa:hover { border-color: var(--brand); color: var(--brand-600); background: var(--brand-soft); }
+
 /* Prebacivanja izmedju racuna */
 .tr-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
 .tr-row:last-child { border-bottom: 0; }

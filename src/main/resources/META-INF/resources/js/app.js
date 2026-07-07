@@ -1316,13 +1316,43 @@ function openTransferModal(accounts, onChange) {
 
 // Budzeti
 async function renderBudgets() {
-    const [budgets] = await Promise.all([api('/api/budgets'), loadRefs()]);
+    const [budgets, goals] = await Promise.all([api('/api/budgets'), api('/api/goals'), loadRefs()]);
+
+    const goalCard = g => {
+        const pct = Math.min(g.percent, 100);
+        let deadlineInfo = 'bez roka';
+        if (g.deadline) {
+            const days = Math.ceil((new Date(g.deadline) - Date.now()) / 86400000);
+            deadlineInfo = days >= 0
+                ? `do ${fmtDate(g.deadline)} — još ${days} ${days === 1 ? 'dan' : 'dana'}`
+                : `rok je istekao ${fmtDate(g.deadline)}`;
+        }
+        return `<div class="card goal-card ${g.achieved ? 'done' : ''}" data-id="${g.id}">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+                <strong style="font-size:16px">${esc(g.name)}</strong>
+                ${g.achieved
+                    ? `<span class="chip goal-done-chip">${icon('check', 'ico ico-sm')} Dostignut</span>`
+                    : `<span class="chip">${g.percent}%</span>`}
+            </div>
+            <div class="stat-value" style="font-size:22px;margin-top:10px">${fmtMoney(g.savedAmount)} <span class="muted" style="font-size:14px;font-weight:600">/ ${fmtMoney(g.targetAmount)}</span></div>
+            <div class="budget-bar"><div class="budget-bar-fill goal-fill" style="width:${pct}%"></div></div>
+            <div class="stat-sub" style="margin-top:6px">${g.achieved
+                ? 'Cilj je ispunjen — bravo!'
+                : `nedostaje još ${fmtMoney(g.remaining)} · ${deadlineInfo}`}</div>
+            <div class="account-actions">
+                ${g.achieved ? '' : `<button class="btn btn-secondary btn-sm" data-act="deposit">Uplati</button>`}
+                <button class="btn btn-danger btn-sm" data-act="delete">Obriši</button>
+            </div>
+        </div>`;
+    };
+
     $('#view').innerHTML = `
         <div class="page-header">
             <div><h1>Budžeti</h1><p>Postavite limite potrošnje i pratite koliko ste ih iskoristili</p></div>
             <button class="btn btn-primary" id="add-budget">${icon('plus', 'ico ico-sm')} Novi budžet</button>
         </div>
-        ${budgets.length ? `<div class="accounts-grid">${budgets.map(b => {
+        <div id="budget-section">
+        ${budgets.length ? `<div class="accounts-grid" id="budget-grid">${budgets.map(b => {
             const pct = Math.min(b.percentUsed, 100);
             const cls = b.percentUsed >= 100 ? 'over' : (b.percentUsed >= 80 ? 'warn' : '');
             return `<div class="card" data-id="${b.id}">
@@ -1343,13 +1373,23 @@ async function renderBudgets() {
             </div>`;
         }).join('')}</div>`
         : `<div class="card"><div class="empty-state"><span class="emoji">🎯</span><p>Još nemate budžete. Postavite limit potrošnje za kategorije koje želite kontrolisati.</p>
-            <button class="btn btn-primary" id="add-budget-empty">+ Novi budžet</button></div></div>`}`;
+            <button class="btn btn-primary" id="add-budget-empty">+ Novi budžet</button></div></div>`}
+        </div>
+
+        <div class="page-header" style="margin-top:36px">
+            <div><h1 style="font-size:19px">Ciljevi štednje</h1><p>Koliko želite skupiti i dokle ste stigli</p></div>
+            <button class="btn btn-secondary" id="add-goal" type="button">${icon('plus', 'ico ico-sm')} Novi cilj</button>
+        </div>
+        ${goals.length
+            ? `<div class="accounts-grid" id="goal-grid">${goals.map(goalCard).join('')}</div>`
+            : `<div class="card"><div class="empty-state"><span class="emoji">🏝️</span><p>Još nemate ciljeve. Postavite šta želite skupiti — ljetovanje, laptop, rezerva za crne dane.</p>
+                <button class="btn btn-primary" id="add-goal-empty" type="button">+ Novi cilj</button></div></div>`}`;
 
     const openForm = (budget) => openBudgetModal(budget, renderBudgets);
     if ($('#add-budget')) $('#add-budget').addEventListener('click', () => openForm(null));
     if ($('#add-budget-empty')) $('#add-budget-empty').addEventListener('click', () => openForm(null));
 
-    $$('.card[data-id] [data-act]').forEach(btn => btn.addEventListener('click', async () => {
+    $$('#budget-grid .card[data-id] [data-act]').forEach(btn => btn.addEventListener('click', async () => {
         const id = Number(btn.closest('.card').dataset.id);
         const budget = budgets.find(b => b.id === id);
         if (btn.dataset.act === 'edit') {
@@ -1362,6 +1402,96 @@ async function renderBudgets() {
             } catch (err) { toast(err.message, 'error'); }
         }
     }));
+
+    if ($('#add-goal')) $('#add-goal').addEventListener('click', () => openGoalModal(renderBudgets));
+    if ($('#add-goal-empty')) $('#add-goal-empty').addEventListener('click', () => openGoalModal(renderBudgets));
+
+    $$('#goal-grid [data-act]').forEach(btn => btn.addEventListener('click', async () => {
+        const id = Number(btn.closest('.card').dataset.id);
+        const goal = goals.find(g => g.id === id);
+        if (btn.dataset.act === 'deposit') {
+            openDepositModal(goal, renderBudgets);
+        } else if (confirm(`Obrisati cilj "${goal.name}"?`)) {
+            try {
+                await api('/api/goals/' + id, { method: 'DELETE' });
+                toast('Cilj obrisan');
+                renderBudgets();
+            } catch (err) { toast(err.message, 'error'); }
+        }
+    }));
+}
+
+// Novi cilj stednje
+function openGoalModal(onSaved) {
+    const body = openModal('Novi cilj štednje', `
+        <form id="goal-form">
+            <div class="form-grid">
+                <div class="form-field full"><span>Naziv</span>
+                    <input type="text" name="name" required placeholder="npr. Ljetovanje"></div>
+                <div class="form-field"><span>Ciljni iznos (EUR)</span>
+                    <input type="number" name="targetAmount" step="0.01" min="0.01" required placeholder="0.00"></div>
+                <div class="form-field"><span>Rok (opciono)</span>
+                    <input type="date" name="deadline"></div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="goal-cancel">Odustani</button>
+                <button type="submit" class="btn btn-primary">Kreiraj cilj</button>
+            </div>
+        </form>`);
+
+    $('#goal-cancel', body).addEventListener('click', closeModal);
+    $('#goal-form', body).addEventListener('submit', async e => {
+        e.preventDefault();
+        const form = new FormData(e.target);
+        try {
+            await api('/api/goals', {
+                method: 'POST',
+                body: {
+                    name: form.get('name'),
+                    targetAmount: Number(form.get('targetAmount')),
+                    deadline: form.get('deadline') || null
+                }
+            });
+            toast('Cilj kreiran');
+            closeModal();
+            onSaved();
+        } catch (err) { toast(err.message, 'error'); }
+    });
+}
+
+// Uplata na cilj
+function openDepositModal(goal, onSaved) {
+    const body = openModal('Uplata: ' + goal.name, `
+        <form id="deposit-form">
+            <div class="form-field"><span>Iznos uplate (EUR)</span>
+                <input type="number" name="amount" step="0.01" min="0.01" required placeholder="0.00"></div>
+            <div class="quick-amounts">
+                ${[10, 20, 50, 100].map(v =>
+                    `<button type="button" class="chip qa" data-v="${v}">+${v} EUR</button>`).join('')}
+            </div>
+            <p class="muted" style="font-size:12.5px;margin-top:12px">Do cilja nedostaje još ${fmtMoney(goal.remaining)}.</p>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="deposit-cancel">Odustani</button>
+                <button type="submit" class="btn btn-primary">Uplati</button>
+            </div>
+        </form>`);
+
+    $$('.qa', body).forEach(chipBtn => chipBtn.addEventListener('click', () => {
+        const input = $('#deposit-form', body).elements.amount;
+        input.value = ((Number(input.value) || 0) + Number(chipBtn.dataset.v)).toFixed(2);
+    }));
+
+    $('#deposit-cancel', body).addEventListener('click', closeModal);
+    $('#deposit-form', body).addEventListener('submit', async e => {
+        e.preventDefault();
+        const amount = Number(new FormData(e.target).get('amount'));
+        try {
+            const updated = await api(`/api/goals/${goal.id}/deposit`, { method: 'POST', body: { amount } });
+            toast(updated.achieved ? `Čestitamo — cilj "${updated.name}" je dostignut!` : 'Uplata zabilježena');
+            closeModal();
+            onSaved();
+        } catch (err) { toast(err.message, 'error'); }
+    });
 }
 
 function openBudgetModal(budget, onSaved) {
