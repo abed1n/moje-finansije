@@ -31,8 +31,11 @@ public class DashboardService {
     @Inject
     BudgetService budgetService;
 
+    // months: 1 (tekuci mjesec), 3 ili 12 — period za sume i rashode po kategorijama
     @Transactional
-    public DashboardDto getDashboard(User user) {
+    public DashboardDto getDashboard(User user, int months) {
+        int period = (months == 3 || months == 12) ? months : 1;
+
         List<Account> accounts = em.createNamedQuery(Account.GET_ACCOUNTS_BY_USER_ID, Account.class)
                 .setParameter("id", user.getId())
                 .getResultList();
@@ -41,15 +44,15 @@ public class DashboardService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         YearMonth currentMonth = YearMonth.now();
-        LocalDate monthStart = currentMonth.atDay(1);
-        LocalDate monthEnd = currentMonth.atEndOfMonth();
+        LocalDate periodStart = currentMonth.minusMonths(period - 1).atDay(1);
+        LocalDate periodEnd = currentMonth.atEndOfMonth();
 
-        BigDecimal income = transactionService.sumAmount(user, TransactionType.INCOME, monthStart, monthEnd, null);
-        BigDecimal expense = transactionService.sumAmount(user, TransactionType.EXPENSE, monthStart, monthEnd, null);
+        BigDecimal income = transactionService.sumAmount(user, TransactionType.INCOME, periodStart, periodEnd, null);
+        BigDecimal expense = transactionService.sumAmount(user, TransactionType.EXPENSE, periodStart, periodEnd, null);
 
         return new DashboardDto(totalBalance, income, expense, income.subtract(expense), accounts.size(),
-                spendingByCategory(user, monthStart, monthEnd),
-                monthlyFlow(user),
+                spendingByCategory(user, periodStart, periodEnd),
+                monthlyFlow(user, period == 12 ? 12 : FLOW_MONTHS),
                 recentTransactions(user),
                 budgetService.getBudgets(user));
     }
@@ -73,10 +76,10 @@ public class DashboardService {
                 .toList();
     }
 
-    private List<DashboardDto.MonthlyFlow> monthlyFlow(User user) {
+    private List<DashboardDto.MonthlyFlow> monthlyFlow(User user, int flowMonths) {
         YearMonth currentMonth = YearMonth.now();
         List<DashboardDto.MonthlyFlow> flow = new ArrayList<>();
-        for (int i = FLOW_MONTHS - 1; i >= 0; i--) {
+        for (int i = flowMonths - 1; i >= 0; i--) {
             YearMonth month = currentMonth.minusMonths(i);
             LocalDate from = month.atDay(1);
             LocalDate to = month.atEndOfMonth();

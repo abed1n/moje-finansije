@@ -712,6 +712,32 @@ th.sortable .sort-arrow { font-size: 8.5px; margin-left: 4px; }
 .rec-info span { font-size: 12px; color: var(--text-3); }
 .rec-amount { font-weight: 700; font-variant-numeric: tabular-nums; font-size: 13.5px; white-space: nowrap; }
 
+/* Segmentirani prekidac (period na dashboardu) */
+.seg {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 4px;
+    border-radius: 10px;
+}
+.seg button {
+    border: 0;
+    background: transparent;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-2);
+    padding: 6px 12px;
+    border-radius: 7px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .14s, color .14s;
+}
+.seg button:hover { color: var(--text); }
+.seg button.active { background: var(--brand-soft); color: var(--brand-600); }
+:root[data-theme="dark"] .seg button.active { color: #34d399; }
+
 /* Ciljevi stednje */
 .budget-bar-fill.goal-fill { background: linear-gradient(90deg, var(--brand), #0e7490); }
 .goal-card.done { border-color: rgba(5, 150, 105, .35); }

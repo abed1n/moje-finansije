@@ -516,9 +516,9 @@ function chartColors() {
         : { income: '#059669', expense: '#e34948' };
 }
 
-function svgDoughnut(items) {
+function svgDoughnut(items, centerLabel = 'EUR · ovaj mjesec') {
     const total = items.reduce((sum, it) => sum + Number(it.amount), 0);
-    if (!total) return '<p class="muted">Nema rashoda u ovom mjesecu.</p>';
+    if (!total) return '<p class="muted">Nema rashoda u izabranom periodu.</p>';
     let offset = 25; // start na vrhu
     const circles = items.map(it => {
         const pct = Number(it.amount) / total * 100;
@@ -541,7 +541,7 @@ function svgDoughnut(items) {
         <svg viewBox="0 0 42 42" width="168" height="168" style="flex-shrink:0" role="img" aria-label="Rashodi po kategorijama">
             ${circles}
             <text x="21" y="20.2" text-anchor="middle" font-size="5.4" font-weight="800" letter-spacing="-.1" style="fill:var(--text)">${Number(total).toLocaleString('sr-ME', { maximumFractionDigits: 0 })}</text>
-            <text x="21" y="25.6" text-anchor="middle" font-size="2.5" font-weight="500" style="fill:var(--text-3)">EUR OVAJ MJESEC</text>
+            <text x="21" y="25.6" text-anchor="middle" font-size="2.5" font-weight="500" style="fill:var(--text-3)">${esc(centerLabel.toUpperCase())}</text>
         </svg>
         <div class="chart-legend">${legend}</div>
     </div>`;
@@ -639,8 +639,12 @@ function budgetRow(b) {
 }
 
 // Dashboard
+let dashPeriod = 1; // 1, 3 ili 12 mjeseci — pamti se dok traje sesija
+
 async function renderDashboard() {
-    const d = await api('/api/dashboard');
+    const d = await api('/api/dashboard?months=' + dashPeriod);
+    const periodText = dashPeriod === 1 ? 'ovaj mjesec'
+        : dashPeriod === 3 ? 'zadnja 3 mjeseca' : 'zadnjih 12 mjeseci';
     const recentRows = d.recentTransactions.map(t => `
         <tr>
             <td>${fmtDate(t.date)}</td>
@@ -652,7 +656,14 @@ async function renderDashboard() {
     $('#view').innerHTML = `
         <div class="page-header">
             <div><h1>Pregled</h1><p>Vaše finansije na jednom mjestu</p></div>
-            <button class="btn btn-primary" id="dash-add-tx">${icon('plus', 'ico ico-sm')} Nova transakcija</button>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <div class="seg" id="dash-period" role="group" aria-label="Period">
+                    <button type="button" data-m="1" class="${dashPeriod === 1 ? 'active' : ''}">Ovaj mjesec</button>
+                    <button type="button" data-m="3" class="${dashPeriod === 3 ? 'active' : ''}">3 mjeseca</button>
+                    <button type="button" data-m="12" class="${dashPeriod === 12 ? 'active' : ''}">Godina</button>
+                </div>
+                <button class="btn btn-primary" id="dash-add-tx">${icon('plus', 'ico ico-sm')} Nova transakcija</button>
+            </div>
         </div>
         <div class="stats-grid">
             <div class="card stat-card">
@@ -661,25 +672,25 @@ async function renderDashboard() {
                 <div class="stat-sub">${d.accountCount} račun(a)</div>
             </div>
             <div class="card stat-card">
-                <div class="stat-top"><span class="stat-label">Prihodi ovaj mjesec</span><span class="stat-ico">${icon('trendUp')}</span></div>
+                <div class="stat-top"><span class="stat-label">Prihodi</span><span class="stat-ico">${icon('trendUp')}</span></div>
                 <div class="stat-value" style="color:var(--income)">+${fmtMoney(d.incomeThisMonth)}</div>
-                <div class="stat-sub">svi računi zajedno</div>
+                <div class="stat-sub">${periodText}</div>
             </div>
             <div class="card stat-card">
-                <div class="stat-top"><span class="stat-label">Rashodi ovaj mjesec</span><span class="stat-ico red">${icon('trendDown')}</span></div>
+                <div class="stat-top"><span class="stat-label">Rashodi</span><span class="stat-ico red">${icon('trendDown')}</span></div>
                 <div class="stat-value" style="color:var(--expense)">-${fmtMoney(d.expenseThisMonth)}</div>
-                <div class="stat-sub">svi računi zajedno</div>
+                <div class="stat-sub">${periodText}</div>
             </div>
             <div class="card stat-card">
-                <div class="stat-top"><span class="stat-label">Neto ovaj mjesec</span><span class="stat-ico slate">${icon('scale')}</span></div>
+                <div class="stat-top"><span class="stat-label">Neto</span><span class="stat-ico slate">${icon('scale')}</span></div>
                 <div class="stat-value" style="color:${Number(d.netThisMonth) >= 0 ? 'var(--income)' : 'var(--expense)'}">${fmtMoney(d.netThisMonth)}</div>
-                <div class="stat-sub">prihodi minus rashodi</div>
+                <div class="stat-sub">prihodi minus rashodi, ${periodText}</div>
             </div>
         </div>
         <div class="dash-grid">
             <div class="card chart-card" id="flow-card">
                 <div class="card-head">
-                    <h3>Tok novca — zadnjih 6 mjeseci</h3>
+                    <h3>Tok novca — zadnjih ${d.monthlyFlow.length} mjeseci</h3>
                     <div class="chart-legend-top">
                         <span class="legend-item"><span class="swatch" style="background:${chartColors().income}"></span>Prihodi</span>
                         <span class="legend-item"><span class="swatch" style="background:${chartColors().expense}"></span>Rashodi</span>
@@ -687,7 +698,7 @@ async function renderDashboard() {
                 </div>
                 ${svgBars(d.monthlyFlow)}
             </div>
-            <div class="card"><h3>Rashodi po kategorijama</h3>${svgDoughnut(d.spendingByCategory)}</div>
+            <div class="card"><h3>Rashodi po kategorijama</h3>${svgDoughnut(d.spendingByCategory, 'EUR · ' + periodText)}</div>
         </div>
         <div class="dash-grid-2">
             <div class="card">
@@ -703,6 +714,11 @@ async function renderDashboard() {
         </div>`;
 
     attachBarTips($('#flow-card'), d.monthlyFlow);
+
+    $$('#dash-period button').forEach(btn => btn.addEventListener('click', () => {
+        dashPeriod = Number(btn.dataset.m);
+        renderDashboard();
+    }));
 
     $('#dash-add-tx').addEventListener('click', async () => {
         await loadRefs();
