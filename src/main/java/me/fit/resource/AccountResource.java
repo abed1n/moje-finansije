@@ -8,6 +8,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import me.fit.dto.AccountDto;
 import me.fit.dto.AccountRequest;
+import me.fit.dto.ReconcileRequest;
+import me.fit.dto.ReconcileResultDto;
 import me.fit.security.CurrentUser;
 import me.fit.service.AccountService;
 
@@ -53,5 +55,13 @@ public class AccountResource {
     public Response deleteAccount(@PathParam("id") Long id) {
         accountService.deleteAccount(currentUser.require(), id);
         return Response.noContent().build();
+    }
+
+    // Uskladjivanje sa stvarnim stanjem (izvod banke / prebrojani novcanik):
+    // razlika se knjizi kao transakcija uskladjivanja pa se stanja garantovano poklope
+    @POST
+    @Path("/{id}/reconcile")
+    public ReconcileResultDto reconcile(@PathParam("id") Long id, @Valid ReconcileRequest request) {
+        return accountService.reconcile(currentUser.require(), id, request.actualBalance());
     }
 }

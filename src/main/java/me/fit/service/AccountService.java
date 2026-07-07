@@ -8,10 +8,14 @@ import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import me.fit.dto.AccountDto;
 import me.fit.dto.AccountRequest;
+import me.fit.dto.ReconcileResultDto;
+import me.fit.dto.TransactionRequest;
 import me.fit.model.Account;
+import me.fit.model.TransactionType;
 import me.fit.model.User;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @ApplicationScoped
@@ -19,6 +23,9 @@ public class AccountService {
 
     @Inject
     EntityManager em;
+
+    @Inject
+    TransactionService transactionService;
 
     public List<AccountDto> getAccounts(User user) {
         return em.createNamedQuery(Account.GET_ACCOUNTS_BY_USER_ID, Account.class)
@@ -54,6 +61,22 @@ public class AccountService {
     public void deleteAccount(User user, Long id) {
         Account account = findOwned(user, id);
         em.remove(account);
+    }
+
+    // Uskladjivanje sa stvarnim stanjem: razlika (zaboravljeni kes, provizija, kamata...)
+    // se knjizi kao jedna transakcija pa se aplikacija i banka garantovano poklapaju
+    @Transactional
+    public ReconcileResultDto reconcile(User user, Long id, BigDecimal actualBalance) {
+        Account account = findOwned(user, id);
+        BigDecimal difference = actualBalance.subtract(account.getBalance());
+        if (difference.signum() == 0) {
+            return new ReconcileResultDto(false, BigDecimal.ZERO, account.getBalance());
+        }
+        transactionService.createTransaction(user, new TransactionRequest(
+                difference.abs(), LocalDate.now(),
+                difference.signum() > 0 ? TransactionType.INCOME : TransactionType.EXPENSE,
+                "Usklađivanje stanja", id, null, null));
+        return new ReconcileResultDto(true, difference, actualBalance);
     }
 
     public Account findOwned(User user, Long id) {

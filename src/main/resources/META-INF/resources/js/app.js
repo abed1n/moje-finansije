@@ -1428,6 +1428,7 @@ async function renderAccounts() {
                     ${a.details ? esc(a.details.bankName || '') + (a.details.accountNumber ? ' - ' + esc(a.details.accountNumber) : '') : '&nbsp;'}
                 </div>
                 <div class="account-actions">
+                    <button class="btn btn-secondary btn-sm" data-act="reconcile">Uskladi</button>
                     <button class="btn btn-secondary btn-sm" data-act="edit">Uredi</button>
                     <button class="btn btn-danger btn-sm" data-act="delete">Obriši</button>
                 </div>
@@ -1449,7 +1450,9 @@ async function renderAccounts() {
     $$('.account-card [data-act]').forEach(btn => btn.addEventListener('click', async () => {
         const id = Number(btn.closest('.account-card').dataset.id);
         const account = accounts.find(a => a.id === id);
-        if (btn.dataset.act === 'edit') {
+        if (btn.dataset.act === 'reconcile') {
+            openReconcileModal(account, renderAccounts);
+        } else if (btn.dataset.act === 'edit') {
             openForm(account);
         } else if (await confirmDialog({ title: 'Brisanje računa',
                 message: `Račun "${account.name}" i sve njegove transakcije će biti trajno obrisani.` })) {
@@ -1513,6 +1516,50 @@ function openAccountModal(account, onSaved) {
                 await api('/api/accounts', { method: 'POST', body: payload });
                 toast('Račun kreiran');
             }
+            closeModal();
+            onSaved();
+        } catch (err) { toast(err.message, 'error'); }
+    });
+}
+
+// Uskladjivanje stanja racuna sa stvarnim stanjem (izvod banke ili prebrojani kes)
+function openReconcileModal(account, onSaved) {
+    const body = openModal('Usklađivanje: ' + account.name, `
+        <p style="font-size:13.5px">Stanje u aplikaciji: <b style="font-variant-numeric:tabular-nums">${fmtMoney(account.balance, account.currency)}</b></p>
+        <form id="rec-form" style="margin-top:16px">
+            <div class="form-field"><span>Stvarno stanje — sa izvoda banke ili prebrojano</span>
+                <input type="number" name="actual" step="0.01" required placeholder="0.00"></div>
+            <p id="rec-diff" style="font-size:13px;margin-top:12px;min-height:20px;color:var(--text-2)">&nbsp;</p>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="rec-cancel">Odustani</button>
+                <button type="submit" class="btn btn-primary">Uskladi stanje</button>
+            </div>
+        </form>`);
+
+    const input = $('#rec-form', body).elements.actual;
+    const diffLine = $('#rec-diff', body);
+    input.addEventListener('input', () => {
+        if (input.value === '') { diffLine.innerHTML = '&nbsp;'; return; }
+        const diff = Number(input.value) - Number(account.balance);
+        if (Math.abs(diff) < 0.005) {
+            diffLine.textContent = 'Stanja se poklapaju — nema šta da se knjiži.';
+        } else {
+            diffLine.innerHTML = `Biće uknjižena transakcija usklađivanja: `
+                + `<b class="${diff > 0 ? 'amount income' : 'amount expense'}">${diff > 0 ? '+' : '-'}${fmtMoney(Math.abs(diff), account.currency)}</b>`;
+        }
+    });
+
+    $('#rec-cancel', body).addEventListener('click', closeModal);
+    $('#rec-form', body).addEventListener('submit', async e => {
+        e.preventDefault();
+        try {
+            const result = await api(`/api/accounts/${account.id}/reconcile`, {
+                method: 'POST',
+                body: { actualBalance: Number(input.value) }
+            });
+            toast(result.adjusted
+                ? `Stanje usklađeno — razlika od ${fmtMoney(Math.abs(result.difference), account.currency)} je uknjižena`
+                : 'Stanja su se već poklapala');
             closeModal();
             onSaved();
         } catch (err) { toast(err.message, 'error'); }
