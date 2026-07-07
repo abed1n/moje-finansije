@@ -57,6 +57,31 @@ class AuthResourceTest {
     }
 
     @Test
+    void tooManyFailedLoginsGetBlocked() {
+        String email = "brute-" + System.nanoTime() + "@pfm.me";
+
+        given().contentType("application/json")
+                .body(Map.of("name", "Meta", "email", email, "password", "tajna123"))
+                .when().post("/api/auth/register")
+                .then().statusCode(201);
+
+        // Pet pogresnih pokusaja jos uvijek vraca 401
+        for (int i = 0; i < 5; i++) {
+            given().contentType("application/json")
+                    .body(Map.of("email", email, "password", "pogresna"))
+                    .when().post("/api/auth/login")
+                    .then().statusCode(401);
+        }
+
+        // Sesti pokusaj je blokiran - 429 sa Retry-After, i to cak sa tacnom lozinkom
+        given().contentType("application/json")
+                .body(Map.of("email", email, "password", "tajna123"))
+                .when().post("/api/auth/login")
+                .then().statusCode(429)
+                .header("Retry-After", notNullValue());
+    }
+
+    @Test
     void registerValidationFails() {
         given().contentType("application/json")
                 .body(Map.of("name", "", "email", "nije-email", "password", "123"))

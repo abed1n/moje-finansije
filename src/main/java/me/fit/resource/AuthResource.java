@@ -1,15 +1,20 @@
 package me.fit.resource;
 
 import io.quarkus.security.Authenticated;
+import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.net.SocketAddress;
 import jakarta.annotation.security.PermitAll;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import me.fit.dto.*;
+import me.fit.exception.TooManyRequestsException;
 import me.fit.security.CurrentUser;
+import me.fit.security.LoginAttemptService;
 import me.fit.service.AuthService;
 
 @Path("/api/auth")
@@ -23,6 +28,9 @@ public class AuthResource {
     @Inject
     CurrentUser currentUser;
 
+    @Inject
+    LoginAttemptService loginAttempts;
+
     @POST
     @Path("/register")
     @PermitAll
@@ -33,8 +41,34 @@ public class AuthResource {
     @POST
     @Path("/login")
     @PermitAll
-    public AuthResponse login(@Valid LoginRequest request) {
-        return authService.login(request);
+    public AuthResponse login(@Valid LoginRequest request, @Context HttpServerRequest http) {
+        String key = clientIp(http) + "|" + request.email().trim().toLowerCase();
+        long wait = loginAttempts.secondsUntilUnlock(key);
+        if (wait > 0) {
+            long minutes = (wait + 59) / 60;
+            throw new TooManyRequestsException(
+                    "Previše neuspjelih pokušaja prijave. Pokušajte ponovo za " + minutes + " min.", wait);
+        }
+        try {
+            AuthResponse response = authService.login(request);
+            loginAttempts.recordSuccess(key);
+            return response;
+        } catch (WebApplicationException e) {
+            if (e.getResponse().getStatus() == Response.Status.UNAUTHORIZED.getStatusCode()) {
+                loginAttempts.recordFailure(key);
+            }
+            throw e;
+        }
+    }
+
+    // IP klijenta - iza proxija se cita iz X-Forwarded-For, inace direktna adresa
+    private String clientIp(HttpServerRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        SocketAddress address = request.remoteAddress();
+        return address != null ? address.hostAddress() : "unknown";
     }
 
     @GET

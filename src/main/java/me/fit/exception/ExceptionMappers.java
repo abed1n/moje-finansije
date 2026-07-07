@@ -19,10 +19,15 @@ public class ExceptionMappers {
     public static class WebApplicationExceptionMapper implements ExceptionMapper<WebApplicationException> {
         @Override
         public Response toResponse(WebApplicationException e) {
-            return Response.status(e.getResponse().getStatus())
+            Response.ResponseBuilder builder = Response.status(e.getResponse().getStatus())
                     .type(MediaType.APPLICATION_JSON)
-                    .entity(ErrorResponse.of(e.getMessage()))
-                    .build();
+                    .entity(ErrorResponse.of(e.getMessage()));
+            // Zadrzi Retry-After ako ga je iznimka postavila (npr. ogranicenje prijava)
+            String retryAfter = e.getResponse().getHeaderString("Retry-After");
+            if (retryAfter != null) {
+                builder.header("Retry-After", retryAfter);
+            }
+            return builder.build();
         }
     }
 
