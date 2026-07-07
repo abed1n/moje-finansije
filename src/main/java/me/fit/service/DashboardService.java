@@ -12,6 +12,7 @@ import me.fit.model.TransactionType;
 import me.fit.model.User;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -31,6 +32,9 @@ public class DashboardService {
     @Inject
     BudgetService budgetService;
 
+    @Inject
+    EcbRatesService ecbRatesService;
+
     // months: 1 (tekuci mjesec), 3 ili 12 — period za sume i rashode po kategorijama
     @Transactional
     public DashboardDto getDashboard(User user, int months) {
@@ -39,9 +43,22 @@ public class DashboardService {
         List<Account> accounts = em.createNamedQuery(Account.GET_ACCOUNTS_BY_USER_ID, Account.class)
                 .setParameter("id", user.getId())
                 .getResultList();
-        BigDecimal totalBalance = accounts.stream()
-                .map(Account::getBalance)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Racuni u drugim valutama se preracunavaju u EUR po ECB kursu,
+        // da zbir ne sabira jabuke i kruske (100 USD nije 100 EUR)
+        boolean hasForeign = false;
+        BigDecimal totalBalance = BigDecimal.ZERO;
+        for (Account account : accounts) {
+            BigDecimal value = account.getBalance();
+            if (!"EUR".equalsIgnoreCase(account.getCurrency())) {
+                hasForeign = true;
+                BigDecimal rate = ecbRatesService.rateFromEur(account.getCurrency());
+                if (rate != null && rate.signum() > 0) {
+                    value = value.divide(rate, 2, RoundingMode.HALF_UP);
+                }
+            }
+            totalBalance = totalBalance.add(value);
+        }
 
         YearMonth currentMonth = YearMonth.now();
         LocalDate periodStart = currentMonth.minusMonths(period - 1).atDay(1);
@@ -51,6 +68,7 @@ public class DashboardService {
         BigDecimal expense = transactionService.sumAmount(user, TransactionType.EXPENSE, periodStart, periodEnd, null);
 
         return new DashboardDto(totalBalance, income, expense, income.subtract(expense), accounts.size(),
+                hasForeign,
                 spendingByCategory(user, periodStart, periodEnd),
                 monthlyFlow(user, period == 12 ? 12 : FLOW_MONTHS),
                 recentTransactions(user),

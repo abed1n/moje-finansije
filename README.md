@@ -8,16 +8,21 @@ pokrece kao jedna aplikacija.
 
 - registracija i prijava (JWT token, lozinke se cuvaju kao BCrypt hash), uloge USER i ADMIN
 - racuni (tekuci, stednja, gotovina, kartica) sa detaljima banke, stanje se samo azurira
+- transferi izmedju racuna (ne ulaze u prihode/rashode, sa istorijom i ponistavanjem)
+- racuni u stranim valutama se u ukupnom stanju preracunavaju u EUR po ECB kursu
 - transakcije: prihodi i rashodi, kategorije, tagovi, filteri i pretraga, sortiranje i paginacija
 - ponavljajuce transakcije: mjesecna pravila (kirija, plata...) koja scheduler automatski upisuje
 - prilozi uz transakcije (upload racuna/faktura vec pri unosu, preuzimanje, brisanje)
 - CSV izvoz transakcija (postuje filtere, spreman za Excel)
 - kategorije po korisniku, default set se kreira pri registraciji
 - budzeti (mjesecni/godisnji) po kategorijama sa procentom potrosenog
+- ciljevi stednje sa napretkom, rokom i uplatama
 - upozorenja u aplikaciji kad budzet predje 80% limita (zvonce u sidebaru)
-- dashboard: ukupno stanje, prihodi/rashodi u mjesecu, tok novca za 6 mjeseci, rashodi po kategorijama
+- dashboard: ukupno stanje, prihodi/rashodi, tok novca, rashodi po kategorijama,
+  period selektor (mjesec / 3 mjeseca / godina) i drill-down po kategoriji
 - tamna tema (prekidac u sidebaru, pamti se po korisniku)
 - mobilni raspored sa donjom navigacijom
+- PWA: instalira se kao aplikacija na telefon, radi i bez mreze
 - alati preko vanjskih API-ja: konverter valuta, lokacija i vrijeme po IP adresi (sa istorijom)
 - admin pregled svih korisnika
 - scheduler: ponavljajuca pravila + prijava racuna u minusu
@@ -83,7 +88,9 @@ Svi endpointi osim register/login traze `Authorization: Bearer <token>` header.
 - `GET|POST /api/categories`, `PUT|DELETE /api/categories/{id}`
 - `GET|POST /api/budgets`, `PUT|DELETE /api/budgets/{id}`
 - `GET|POST /api/recurring`, `PUT /api/recurring/{id}/toggle`, `DELETE /api/recurring/{id}`
-- `GET /api/dashboard`
+- `GET|POST /api/transfers`, `DELETE /api/transfers/{id}`
+- `GET|POST /api/goals`, `POST /api/goals/{id}/deposit`, `DELETE /api/goals/{id}`
+- `GET /api/dashboard?months=1|3|12`
 - `GET /api/tools/currency?from=EUR&to=USD&value=100`, `GET /api/tools/location`,
   `GET /api/tools/timezone` + `/history` varijante
 - `GET /api/admin/users` (samo ADMIN)

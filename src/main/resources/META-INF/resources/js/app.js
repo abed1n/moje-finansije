@@ -702,7 +702,7 @@ async function renderDashboard() {
             <div class="card stat-card">
                 <div class="stat-top"><span class="stat-label">Ukupno stanje</span><span class="stat-ico">${icon('wallet')}</span></div>
                 <div class="stat-value">${fmtMoney(d.totalBalance)}</div>
-                <div class="stat-sub">${d.accountCount} račun(a)</div>
+                <div class="stat-sub">${d.accountCount} račun(a)${d.hasForeignCurrency ? ' · strane valute preračunate u EUR' : ''}</div>
             </div>
             <div class="card stat-card">
                 <div class="stat-top"><span class="stat-label">Prihodi</span><span class="stat-ico">${icon('trendUp')}</span></div>
