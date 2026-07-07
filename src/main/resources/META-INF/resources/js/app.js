@@ -125,6 +125,38 @@ $('#modal-backdrop').addEventListener('click', e => {
     if (e.target === $('#modal-backdrop')) closeModal();
 });
 
+// Potvrda u stilu aplikacije (umjesto browserskog confirm dijaloga).
+// Zivi u vlastitom sloju pa radi i preko otvorenog modala.
+function confirmDialog({ title = 'Potvrda', message, confirmText = 'Obriši' }) {
+    return new Promise(resolve => {
+        const overlay = document.createElement('div');
+        overlay.className = 'confirm-backdrop';
+        overlay.innerHTML = `
+            <div class="confirm-box" role="alertdialog" aria-modal="true" aria-label="${esc(title)}">
+                <h3>${esc(title)}</h3>
+                <p>${esc(message)}</p>
+                <div class="confirm-actions">
+                    <button class="btn btn-secondary" data-r="0" type="button">Odustani</button>
+                    <button class="btn btn-danger-solid" data-r="1" type="button">${esc(confirmText)}</button>
+                </div>
+            </div>`;
+
+        const done = result => {
+            document.removeEventListener('keydown', onKey);
+            overlay.remove();
+            resolve(result);
+        };
+        const onKey = e => { if (e.key === 'Escape') done(false); };
+
+        overlay.addEventListener('click', e => { if (e.target === overlay) done(false); });
+        overlay.querySelectorAll('button').forEach(btn =>
+            btn.addEventListener('click', () => done(btn.dataset.r === '1')));
+        document.addEventListener('keydown', onKey);
+        document.body.appendChild(overlay);
+        overlay.querySelector('[data-r="0"]').focus();
+    });
+}
+
 $('#bell-btn').addEventListener('click', openAlertsModal);
 $('#theme-btn').addEventListener('click', toggleTheme);
 $('#mobile-more').addEventListener('click', openMoreSheet);
@@ -935,7 +967,8 @@ async function renderTransactions() {
             const transaction = allTransactions.find(t => t.id === id);
             if (btn.dataset.act === 'edit') {
                 openTransactionModal(transaction, loadTable);
-            } else if (confirm('Obrisati ovu transakciju? Stanje računa će biti vraćeno.')) {
+            } else if (await confirmDialog({ title: 'Brisanje transakcije',
+                    message: 'Stanje računa će biti vraćeno kao da transakcija nije ni postojala.' })) {
                 try {
                     await api('/api/transactions/' + id, { method: 'DELETE' });
                     toast('Transakcija obrisana');
@@ -1040,7 +1073,8 @@ function openRecurringModal() {
                 try {
                     if (el.dataset.act === 'toggle') {
                         await api(`/api/recurring/${id}/toggle`, { method: 'PUT' });
-                    } else if (confirm('Obrisati ovo pravilo? Već kreirane transakcije ostaju.')) {
+                    } else if (await confirmDialog({ title: 'Brisanje pravila',
+                            message: 'Pravilo prestaje da važi. Već kreirane transakcije ostaju.' })) {
                         await api('/api/recurring/' + id, { method: 'DELETE' });
                         toast('Pravilo obrisano');
                     }
@@ -1212,7 +1246,8 @@ function renderAttachmentSection(body, transaction) {
                     link.click();
                     URL.revokeObjectURL(url);
                 } catch (err) { toast(err.message, 'error'); }
-            } else if (confirm('Obrisati prilog?')) {
+            } else if (await confirmDialog({ title: 'Brisanje priloga',
+                    message: 'Fajl "' + attachment.filename + '" će biti trajno obrisan.' })) {
                 try {
                     await api('/api/transactions/attachments/' + id, { method: 'DELETE' });
                     draw(attachments.filter(a => a.id !== id));
@@ -1280,7 +1315,8 @@ async function renderAccounts() {
         const account = accounts.find(a => a.id === id);
         if (btn.dataset.act === 'edit') {
             openForm(account);
-        } else if (confirm(`Obrisati račun "${account.name}"? Sve njegove transakcije će biti obrisane.`)) {
+        } else if (await confirmDialog({ title: 'Brisanje računa',
+                message: `Račun "${account.name}" i sve njegove transakcije će biti trajno obrisani.` })) {
             try {
                 await api('/api/accounts/' + id, { method: 'DELETE' });
                 toast('Račun obrisan');
@@ -1395,7 +1431,9 @@ function openTransferModal(accounts, onChange) {
             : '<p class="muted" style="font-size:13px;margin-top:8px">Još nema prebacivanja.</p>';
 
         $$('.tr-row button', container).forEach(btn => btn.addEventListener('click', async () => {
-            if (!confirm('Poništiti ovo prebacivanje? Novac se vraća na izvorni račun.')) return;
+            const ok = await confirmDialog({ title: 'Poništavanje prebacivanja',
+                message: 'Novac se vraća na izvorni račun.', confirmText: 'Poništi' });
+            if (!ok) return;
             const id = Number(btn.closest('.tr-row').dataset.id);
             try {
                 await api('/api/transfers/' + id, { method: 'DELETE' });
@@ -1511,7 +1549,8 @@ async function renderBudgets() {
         const budget = budgets.find(b => b.id === id);
         if (btn.dataset.act === 'edit') {
             openForm(budget);
-        } else if (confirm(`Obrisati budžet "${budget.name}"?`)) {
+        } else if (await confirmDialog({ title: 'Brisanje budžeta',
+                message: `Budžet "${budget.name}" će biti obrisan. Transakcije ostaju netaknute.` })) {
             try {
                 await api('/api/budgets/' + id, { method: 'DELETE' });
                 toast('Budžet obrisan');
@@ -1528,7 +1567,8 @@ async function renderBudgets() {
         const goal = goals.find(g => g.id === id);
         if (btn.dataset.act === 'deposit') {
             openDepositModal(goal, renderBudgets);
-        } else if (confirm(`Obrisati cilj "${goal.name}"?`)) {
+        } else if (await confirmDialog({ title: 'Brisanje cilja',
+                message: `Cilj "${goal.name}" i zabilježeni napredak će biti obrisani.` })) {
             try {
                 await api('/api/goals/' + id, { method: 'DELETE' });
                 toast('Cilj obrisan');
@@ -1698,7 +1738,8 @@ async function renderCategories() {
         const category = categories.find(c => c.id === id);
         if (btn.dataset.act === 'edit') {
             openCategoryModal(category, renderCategories);
-        } else if (confirm(`Obrisati kategoriju "${category.name}"?`)) {
+        } else if (await confirmDialog({ title: 'Brisanje kategorije',
+                message: `Kategorija "${category.name}" će biti obrisana sa transakcija koje je koriste.` })) {
             try {
                 await api('/api/categories/' + id, { method: 'DELETE' });
                 toast('Kategorija obrisana');
