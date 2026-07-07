@@ -1857,6 +1857,15 @@ async function renderAdmin() {
         </div>`;
 }
 
+// PWA: service worker omogucava instalaciju i rad bez mreze
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {
+            // aplikacija normalno radi i bez service workera
+        });
+    });
+}
+
 // Inicijalizacija
 (async function init() {
     if (!state.token) {
