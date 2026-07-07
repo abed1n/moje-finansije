@@ -11,6 +11,8 @@ pokrece kao jedna aplikacija.
 - transferi izmedju racuna (ne ulaze u prihode/rashode, sa istorijom i ponistavanjem)
 - racuni u stranim valutama se u ukupnom stanju preracunavaju u EUR po ECB kursu
 - transakcije: prihodi i rashodi, kategorije, tagovi, filteri i pretraga, sortiranje i paginacija
+- uvoz bankovnog izvoda (CSV) sa automatskom kategorizacijom koja uci iz korisnikovih ispravki,
+  prepoznavanjem duplikata i pregledom prije potvrde
 - ponavljajuce transakcije: mjesecna pravila (kirija, plata...) koja scheduler automatski upisuje
 - prilozi uz transakcije (upload racuna/faktura vec pri unosu, preuzimanje, brisanje)
 - CSV izvoz transakcija (postuje filtere, spreman za Excel)
@@ -90,6 +92,7 @@ Svi endpointi osim register/login traze `Authorization: Bearer <token>` header.
 - `GET|POST /api/recurring`, `PUT /api/recurring/{id}/toggle`, `DELETE /api/recurring/{id}`
 - `GET|POST /api/transfers`, `DELETE /api/transfers/{id}`
 - `GET|POST /api/goals`, `POST /api/goals/{id}/deposit`, `DELETE /api/goals/{id}`
+- `POST /api/import/preview` (multipart CSV), `POST /api/import/confirm`
 - `GET /api/dashboard?months=1|3|12`
 - `GET /api/tools/currency?from=EUR&to=USD&value=100`, `GET /api/tools/location`,
   `GET /api/tools/timezone` + `/history` varijante

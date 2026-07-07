@@ -55,6 +55,7 @@ const ICONS = {
     scale: '<path d="M12 3v18"/><path d="M8 21h8"/><path d="m5 7 3 7a3 3 0 0 1-6 0z"/><path d="m19 7 3 7a3 3 0 0 1-6 0z"/><path d="M4 7h16"/>',
     repeat: '<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
     download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+    upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/>',
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
     moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
     chevLeft: '<path d="m15 18-6-6 6-6"/>',
@@ -108,7 +109,8 @@ function toast(message, type = 'success') {
     setTimeout(() => el.remove(), 4200);
 }
 
-function openModal(title, bodyHtml) {
+function openModal(title, bodyHtml, wide = false) {
+    $('#modal').classList.toggle('wide', !!wide);
     $('#modal-title').textContent = title;
     $('#modal-body').innerHTML = bodyHtml;
     $('#modal-backdrop').classList.remove('hidden');
@@ -860,6 +862,7 @@ async function renderTransactions() {
         <div class="page-header">
             <div><h1>Transakcije</h1><p>Svi prihodi i rashodi</p></div>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <button class="btn btn-secondary" id="tx-import" type="button">${icon('upload', 'ico ico-sm')} Uvezi izvod</button>
                 <button class="btn btn-secondary" id="tx-recurring" type="button">${icon('repeat', 'ico ico-sm')} Ponavljajuće</button>
                 <button class="btn btn-secondary" id="tx-export" type="button">${icon('download', 'ico ico-sm')} Izvezi CSV</button>
                 <button class="btn btn-primary" id="add-tx" type="button">${icon('plus', 'ico ico-sm')} Nova transakcija</button>
@@ -1029,6 +1032,7 @@ async function renderTransactions() {
     $('#add-tx').addEventListener('click', () => openTransactionModal(null, loadTable));
     $('#tx-export').addEventListener('click', exportCsv);
     $('#tx-recurring').addEventListener('click', openRecurringModal);
+    $('#tx-import').addEventListener('click', () => openImportModal(loadTable));
 
     // Filter prenesen iz drill-down pregleda kategorije
     if (state.categoryFilter) {
@@ -1036,6 +1040,124 @@ async function renderTransactions() {
         state.categoryFilter = null;
     }
     await loadTable();
+}
+
+// Uvoz bankovnog izvoda: upload CSV-a, pregled sa predlozima kategorija, potvrda
+function openImportModal(onDone) {
+    const body = openModal('Uvoz bankovnog izvoda', `
+        <form id="import-form">
+            <div class="form-grid">
+                <div class="form-field"><span>Račun na koji se uvozi</span>
+                    <select name="accountId">
+                        ${state.accounts.map(a => `<option value="${a.id}">${esc(a.name)} (${esc(a.currency)})</option>`).join('')}
+                    </select></div>
+                <div class="form-field"><span>CSV fajl izvoda iz e-bankinga</span>
+                    <input type="file" name="file" accept=".csv,text/csv" required></div>
+            </div>
+            <p class="muted" style="font-size:12.5px;margin-top:12px">
+                Podržani su izvodi sa kolonama datum, opis i iznos (ili odvojene kolone uplata/isplata).
+                Prije uvoza dobijate pregled sa predloženim kategorijama koje možete izmijeniti.</p>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Učitaj i pregledaj</button>
+            </div>
+        </form>`, true);
+
+    $('#import-form', body).addEventListener('submit', async e => {
+        e.preventDefault();
+        const accountId = Number(e.target.elements.accountId.value);
+        const fileInput = e.target.elements.file;
+        if (!fileInput.files.length) return;
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('accountId', String(accountId));
+
+        body.innerHTML = '<div class="loading-state"><span class="spinner"></span>Čitam izvod...</div>';
+        let preview;
+        try {
+            preview = await api('/api/import/preview', { method: 'POST', body: formData });
+        } catch (err) {
+            toast(err.message, 'error');
+            closeModal();
+            return;
+        }
+        renderImportPreview(body, accountId, preview, onDone);
+    });
+}
+
+function renderImportPreview(body, accountId, preview, onDone) {
+    const categoryOptions = (type, selectedId) =>
+        '<option value="">Bez kategorije</option>' + state.categories
+            .filter(c => c.type === type)
+            .map(c => `<option value="${c.id}" ${c.id === selectedId ? 'selected' : ''}>${esc(c.name)}</option>`)
+            .join('');
+
+    const duplicates = preview.rows.filter(r => r.duplicate).length;
+
+    body.innerHTML = `
+        <p style="font-size:13px;margin-bottom:4px">
+            Pronađeno <b>${preview.rows.length}</b> transakcija${duplicates
+                ? `, od toga <b>${duplicates}</b> već postoji (isključene su iz uvoza)` : ''}.
+            Provjerite kategorije i potvrdite.</p>
+        ${preview.skipped.length
+            ? `<p class="muted" style="font-size:12px;margin-bottom:4px">Preskočeno: ${esc(preview.skipped.join('; '))}</p>` : ''}
+        <div class="table-wrap" style="max-height:340px;overflow-y:auto">
+        <table class="import-table">
+            <thead><tr><th></th><th>Datum</th><th>Opis</th><th style="text-align:right">Iznos</th><th>Kategorija</th></tr></thead>
+            <tbody>${preview.rows.map((r, i) => `
+                <tr class="${r.duplicate ? 'dup' : ''}" data-i="${i}">
+                    <td><input type="checkbox" class="imp-inc" ${r.duplicate ? '' : 'checked'}></td>
+                    <td style="white-space:nowrap">${fmtDate(r.date)}</td>
+                    <td>${esc(r.description || '-')}${r.duplicate ? ' <span class="chip dup-chip">duplikat</span>' : ''}</td>
+                    <td class="amount ${r.type === 'INCOME' ? 'income' : 'expense'}" style="text-align:right;white-space:nowrap">${r.type === 'INCOME' ? '+' : '-'}${fmtMoney(r.amount)}</td>
+                    <td><select class="imp-cat">${categoryOptions(r.type, r.suggestedCategoryId)}</select></td>
+                </tr>`).join('')}</tbody>
+        </table>
+        </div>
+        <label style="display:flex;align-items:center;gap:9px;margin-top:14px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="imp-learn" class="switch" checked>
+            Zapamti moje izbore kategorija za buduće uvoze
+        </label>
+        <div class="form-actions">
+            <button class="btn btn-secondary" id="imp-cancel" type="button">Odustani</button>
+            <button class="btn btn-primary" id="imp-confirm" type="button">Uvezi transakcije</button>
+        </div>`;
+
+    $('#imp-cancel', body).addEventListener('click', closeModal);
+    $('#imp-confirm', body).addEventListener('click', async () => {
+        const rows = [];
+        $$('.import-table tbody tr', body).forEach(tr => {
+            if (!tr.querySelector('.imp-inc').checked) return;
+            const r = preview.rows[Number(tr.dataset.i)];
+            const catValue = tr.querySelector('.imp-cat').value;
+            rows.push({
+                date: r.date,
+                description: r.description,
+                amount: r.amount,
+                type: r.type,
+                categoryId: catValue ? Number(catValue) : null
+            });
+        });
+        if (!rows.length) {
+            toast('Nijedan red nije označen za uvoz', 'error');
+            return;
+        }
+        const button = $('#imp-confirm', body);
+        button.disabled = true;
+        try {
+            const result = await api('/api/import/confirm', {
+                method: 'POST',
+                body: { accountId, learnRules: $('#imp-learn', body).checked, rows }
+            });
+            toast(`Uvezeno ${result.created} transakcija`
+                + (result.rulesLearned ? `, naučeno ${result.rulesLearned} novih pravila` : ''));
+            closeModal();
+            onDone();
+        } catch (err) {
+            toast(err.message, 'error');
+            button.disabled = false;
+        }
+    });
 }
 
 // Ponavljajuca pravila: lista, pauziranje i brisanje
