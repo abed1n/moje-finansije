@@ -148,10 +148,12 @@ public class DemoDataSeeder {
                 new BigDecimal("650.00"), TransactionType.EXPENSE, "Kirija za stan",
                 3, checking.id(), categories.get("Stanovanje").id()));
 
-        // Cilj stednje sa napretkom
+        // Samostalni cilj (rucne uplate) i cilj koji prati stanje stednje
         GoalDto ljetovanje = goalService.createGoal(demo, new GoalRequest(
-                "Ljetovanje", new BigDecimal("1500.00"), today.plusMonths(2).withDayOfMonth(15)));
+                "Ljetovanje", new BigDecimal("1500.00"), today.plusMonths(2).withDayOfMonth(15), null));
         goalService.deposit(demo, ljetovanje.id(), new BigDecimal("620.00"));
+        goalService.createGoal(demo, new GoalRequest(
+                "Rezerva za crne dane", new BigDecimal("5000.00"), null, savings.id()));
     }
 
     private void addIfPast(User user, LocalDate today, LocalDate date, BigDecimal amount,

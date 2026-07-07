@@ -34,6 +34,11 @@ public class SavingsGoal {
     @Column(nullable = false)
     private Instant createdAt = Instant.now();
 
+    // Ako je postavljen, napredak cilja prati stanje ovog racuna umjesto rucnih uplata
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id")
+    private Account account;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -87,6 +92,14 @@ public class SavingsGoal {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Account getAccount() {
+        return account;
+    }
+
+    public void setAccount(Account account) {
+        this.account = account;
     }
 
     public User getUser() {

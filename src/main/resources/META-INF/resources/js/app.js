@@ -1677,8 +1677,9 @@ async function renderBudgets() {
             <div class="stat-sub" style="margin-top:6px">${g.achieved
                 ? 'Cilj je ispunjen — bravo!'
                 : `nedostaje još ${fmtMoney(g.remaining)} · ${deadlineInfo}`}</div>
+            ${g.accountId ? `<div style="margin-top:10px"><span class="chip"><span class="dot" style="background:var(--brand)"></span>Prati stanje: ${esc(g.accountName)}</span></div>` : ''}
             <div class="account-actions">
-                ${g.achieved ? '' : `<button class="btn btn-secondary btn-sm" data-act="deposit">Uplati</button>`}
+                ${g.achieved || g.accountId ? '' : `<button class="btn btn-secondary btn-sm" data-act="deposit">Uplati</button>`}
                 <button class="btn btn-danger btn-sm" data-act="delete">Obriši</button>
             </div>
         </div>`;
@@ -1772,7 +1773,14 @@ function openGoalModal(onSaved) {
                     <input type="number" name="targetAmount" step="0.01" min="0.01" required placeholder="0.00"></div>
                 <div class="form-field"><span>Rok (opciono)</span>
                     <input type="date" name="deadline"></div>
+                <div class="form-field full"><span>Prati stanje računa (opciono)</span>
+                    <select name="accountId">
+                        <option value="">Ne — vodim uplate ručno</option>
+                        ${state.accounts.map(a => `<option value="${a.id}">${esc(a.name)} — trenutno ${fmtMoney(a.balance, a.currency)}</option>`).join('')}
+                    </select></div>
             </div>
+            <p class="muted" style="font-size:12.5px;margin-top:10px">Ako cilj prati račun (npr. Štednju),
+                napredak se ažurira sam: prebacite novac na taj račun i cilj raste, bez ručnih uplata.</p>
             <div class="form-actions">
                 <button type="button" class="btn btn-secondary" id="goal-cancel">Odustani</button>
                 <button type="submit" class="btn btn-primary">Kreiraj cilj</button>
@@ -1789,7 +1797,8 @@ function openGoalModal(onSaved) {
                 body: {
                     name: form.get('name'),
                     targetAmount: Number(form.get('targetAmount')),
-                    deadline: form.get('deadline') || null
+                    deadline: form.get('deadline') || null,
+                    accountId: form.get('accountId') ? Number(form.get('accountId')) : null
                 }
             });
             toast('Cilj kreiran');

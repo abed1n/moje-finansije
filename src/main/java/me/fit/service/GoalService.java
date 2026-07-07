@@ -4,6 +4,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import me.fit.dto.GoalDto;
@@ -21,6 +22,9 @@ public class GoalService {
     @Inject
     EntityManager em;
 
+    @Inject
+    AccountService accountService;
+
     @Transactional
     public List<GoalDto> getGoals(User user) {
         return em.createNamedQuery(SavingsGoal.GET_BY_USER_ID, SavingsGoal.class)
@@ -35,6 +39,9 @@ public class GoalService {
         goal.setName(request.name().trim());
         goal.setTargetAmount(request.targetAmount());
         goal.setDeadline(request.deadline());
+        if (request.accountId() != null) {
+            goal.setAccount(accountService.findOwned(user, request.accountId()));
+        }
         goal.setUser(em.getReference(User.class, user.getId()));
         em.persist(goal);
         return GoalDto.from(goal);
@@ -43,6 +50,10 @@ public class GoalService {
     @Transactional
     public GoalDto deposit(User user, Long id, BigDecimal amount) {
         SavingsGoal goal = findOwned(user, id);
+        if (goal.getAccount() != null) {
+            throw new BadRequestException("Cilj prati stanje računa \"" + goal.getAccount().getName()
+                    + "\" — napredak se mijenja prebacivanjem novca na taj račun");
+        }
         goal.setSavedAmount(goal.getSavedAmount().add(amount));
         return GoalDto.from(goal);
     }
