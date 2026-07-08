@@ -18,6 +18,8 @@ let verifyNotice = null;
 // Google client id sa servera (null ako Google prijava nije podesena)
 let googleClientId = null;
 let googleReady = false;
+// Da li server trazi potvrdu emaila prije prijave (podrazumijevano da)
+let verificationRequired = true;
 
 function esc(value) {
     return String(value ?? '').replace(/[&<>"']/g, ch => ({
@@ -655,16 +657,24 @@ $('#register-form').addEventListener('submit', async e => {
     e.preventDefault();
     const form = new FormData(e.target);
     const email = form.get('email');
+    const password = form.get('password');
     try {
         await api('/api/auth/register', {
             method: 'POST',
-            body: { name: form.get('name'), email, password: form.get('password') }
+            body: { name: form.get('name'), email, password }
         });
-        // Registracija ne prijavljuje - korisnik prvo mora potvrditi email
-        e.target.reset();
-        switchAuthTab('login');
-        showAuthSuccess('Nalog je kreiran. Poslali smo link za potvrdu na ' + email
-            + ' — potvrdite adresu da biste se prijavili.');
+        if (verificationRequired) {
+            // Nalog kreiran, ali se prvo mora potvrditi email
+            e.target.reset();
+            switchAuthTab('login');
+            showAuthSuccess('Nalog je kreiran. Poslali smo link za potvrdu na ' + email
+                + ' — potvrdite adresu da biste se prijavili.');
+        } else {
+            // Verifikacija iskljucena: odmah prijavi korisnika
+            const auth = await api('/api/auth/login', { method: 'POST', body: { email, password } });
+            saveAuth(auth);
+            showApp();
+        }
     } catch (err) {
         showAuthError(err.message);
     }
@@ -2458,6 +2468,7 @@ if ('serviceWorker' in navigator) {
     try {
         const cfg = await api('/api/auth/config');
         googleClientId = cfg.googleClientId;
+        verificationRequired = cfg.emailVerificationRequired !== false;
     } catch (ignored) { /* Google prijava nije obavezna */ }
 
     const params = new URLSearchParams(location.search);

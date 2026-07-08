@@ -24,7 +24,7 @@ import me.fit.service.RefreshTokenService;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.time.Duration;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 @Path("/api/auth")
@@ -58,13 +58,18 @@ public class AuthResource {
     @ConfigProperty(name = "app.auth.cookie-secure", defaultValue = "false")
     boolean cookieSecure;
 
-    // Frontendu govori da li je Google prijava dostupna i sa kojim client id-om
+    @ConfigProperty(name = "app.email-verification.required", defaultValue = "true")
+    boolean emailVerificationRequired;
+
+    // Frontendu govori da li je Google prijava dostupna i da li se trazi potvrda emaila
     @GET
     @Path("/config")
     @PermitAll
     public Map<String, Object> config() {
-        return Collections.singletonMap("googleClientId",
-                googleAuth.isConfigured() ? googleAuth.clientId() : null);
+        Map<String, Object> cfg = new HashMap<>();
+        cfg.put("googleClientId", googleAuth.isConfigured() ? googleAuth.clientId() : null);
+        cfg.put("emailVerificationRequired", emailVerificationRequired);
+        return cfg;
     }
 
     // Prijava/registracija preko Google naloga. Google verifikuje email pa je nalog odmah potvrdjen.
@@ -84,7 +89,9 @@ public class AuthResource {
     @PermitAll
     public Response register(@Valid RegisterRequest request) {
         UserDto user = authService.register(request);
-        emailVerification.sendFor(user.id());
+        if (emailVerificationRequired) {
+            emailVerification.sendFor(user.id());
+        }
         return Response.status(Response.Status.CREATED).entity(user).build();
     }
 

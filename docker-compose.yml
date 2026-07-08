@@ -44,6 +44,8 @@ services:
       # Osnovni URL za linkove u emailu i Secure flag na kolacicu (za HTTPS deploy)
       APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      # Potvrda emaila obavezna prije prijave. Iskljuci (false) ako hosting ne salje email.
+      EMAIL_VERIFICATION_REQUIRED: ${EMAIL_VERIFICATION_REQUIRED:-true}
       # JWT kljucevi. Podrazumijevano demo kljucevi iz slike; za produkciju
       # postavi putanje u .env i otkomentarisi mount kljuceva dole.
       JWT_PRIVATE_KEY_LOCATION: ${JWT_PRIVATE_KEY_LOCATION:-jwt/privateKey.pem}

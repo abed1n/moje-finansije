@@ -12,6 +12,7 @@ import me.fit.exception.ConflictException;
 import me.fit.model.Profile;
 import me.fit.model.User;
 import me.fit.security.TokenService;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.List;
 
@@ -27,7 +28,12 @@ public class AuthService {
     @Inject
     CategoryService categoryService;
 
-    // Registracija ne prijavljuje korisnika: prvo mora potvrditi email adresu.
+    // Kad je iskljucena, registracija odmah verifikuje nalog i prijava ne trazi potvrdu.
+    @ConfigProperty(name = "app.email-verification.required", defaultValue = "true")
+    boolean emailVerificationRequired;
+
+    // Registracija ne prijavljuje korisnika: prvo mora potvrditi email adresu
+    // (osim kad je verifikacija iskljucena - tada je nalog odmah potvrdjen).
     @Transactional
     public UserDto register(RegisterRequest request) {
         String email = request.email().trim().toLowerCase();
@@ -38,6 +44,9 @@ public class AuthService {
         user.setName(request.name().trim());
         user.setEmail(email);
         user.setPasswordHash(BcryptUtil.bcryptHash(request.password()));
+        if (!emailVerificationRequired) {
+            user.setEmailVerified(true);
+        }
         em.persist(user);
         categoryService.seedDefaultCategories(user);
         return UserDto.from(user);
@@ -52,7 +61,7 @@ public class AuthService {
                 || !BcryptUtil.matches(request.password(), user.getPasswordHash())) {
             throw new ClientErrorException("Pogrešan email ili lozinka", Response.Status.UNAUTHORIZED);
         }
-        if (!user.isEmailVerified()) {
+        if (emailVerificationRequired && !user.isEmailVerified()) {
             throw new ClientErrorException(
                     "Potvrdite email adresu prije prijave. Provjerite inbox za link za potvrdu.",
                     Response.Status.FORBIDDEN);
