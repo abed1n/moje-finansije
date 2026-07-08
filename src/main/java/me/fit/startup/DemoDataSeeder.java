@@ -65,23 +65,31 @@ public class DemoDataSeeder {
         if (!seedEnabled) {
             return;
         }
-        Long userCount = em.createQuery("select count(u) from User u", Long.class).getSingleResult();
-        if (userCount > 0) {
-            LOG.info("Demo podaci se preskaču - baza već sadrži korisnike");
+        // Idempotentno: seeduj samo ako demo nalog jos ne postoji (radi i na bazi sa korisnicima)
+        boolean demoExists = !em.createNamedQuery(User.GET_BY_EMAIL, User.class)
+                .setParameter("email", "demo@pfm.me")
+                .getResultList().isEmpty();
+        if (demoExists) {
+            LOG.info("Demo podaci već postoje - preskače se");
             return;
         }
-        seed();
-        LOG.info("Demo podaci ubačeni: demo@pfm.me / demo123, admin@pfm.me / admin123");
+        // Admin sa poznatom lozinkom se pravi SAMO na praznoj bazi (lokalni razvoj).
+        // Na javnoj bazi (vec ima korisnike) se preskace da admin/admin123 ne bude rupa.
+        long userCount = em.createQuery("select count(u) from User u", Long.class).getSingleResult();
+        seed(userCount == 0);
+        LOG.info("Demo podaci ubačeni: demo@pfm.me / demo123");
     }
 
-    private void seed() {
-        authService.register(new RegisterRequest("Admin", "admin@pfm.me", "admin123"));
-        userService.promoteToAdmin("admin@pfm.me");
+    private void seed(boolean includeAdmin) {
+        if (includeAdmin) {
+            authService.register(new RegisterRequest("Admin", "admin@pfm.me", "admin123"));
+            userService.promoteToAdmin("admin@pfm.me");
+            userService.markEmailVerified("admin@pfm.me");
+        }
 
         authService.register(new RegisterRequest("Demo Korisnik", "demo@pfm.me", "demo123"));
 
-        // Demo nalozi su odmah potvrdjeni da bi bili spremni za prikaz
-        userService.markEmailVerified("admin@pfm.me");
+        // Demo nalog je odmah potvrdjen da bude spreman za prikaz
         userService.markEmailVerified("demo@pfm.me");
 
         User demo = em.createNamedQuery(User.GET_BY_EMAIL, User.class)
