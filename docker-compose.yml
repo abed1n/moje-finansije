@@ -37,6 +37,7 @@ services:
       MAILER_MOCK: ${MAILER_MOCK:-true}
       MAILER_HOST: ${MAILER_HOST:-smtp.example.com}
       MAILER_PORT: ${MAILER_PORT:-587}
+      MAILER_TLS: ${MAILER_TLS:-REQUIRED}
       MAILER_USERNAME: ${MAILER_USERNAME:-}
       MAILER_PASSWORD: ${MAILER_PASSWORD:-}
       MAILER_FROM: ${MAILER_FROM:-Moje finansije <no-reply@moje-finansije.me>}
