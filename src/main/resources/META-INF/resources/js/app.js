@@ -13,6 +13,8 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
 // Token iz linka za reset lozinke (?reset=...), postavlja se pri inicijalizaciji
 let resetToken = null;
+// Poruka o ishodu potvrde emaila, prikazuje se nakon inicijalizacije
+let verifyNotice = null;
 
 function esc(value) {
     return String(value ?? '').replace(/[&<>"']/g, ch => ({
@@ -2291,8 +2293,17 @@ async function renderProfile() {
                 <div class="tool-result" style="margin-top:20px">
                     <dl class="kv">
                         <dt>Uloga</dt><dd>${me.role === 'ADMIN' ? 'Administrator' : 'Korisnik'}</dd>
+                        <dt>Email adresa</dt>
+                        <dd>${me.emailVerified
+                            ? '<span class="verif-badge ok">Potvrđena</span>'
+                            : '<span class="verif-badge pending">Nije potvrđena</span>'}</dd>
                         <dt>Nalog kreiran</dt><dd>${new Date(me.createdAt).toLocaleDateString('sr-ME')}</dd>
                     </dl>
+                    ${me.emailVerified ? '' : `
+                    <div class="verif-cta">
+                        <p>Potvrdite email adresu da osigurate pristup nalogu i mogućnost resetovanja lozinke.</p>
+                        <button type="button" class="btn btn-secondary btn-sm" id="resend-verif">Pošalji link ponovo</button>
+                    </div>`}
                 </div>
             </div>
         </div>`;
@@ -2329,6 +2340,18 @@ async function renderProfile() {
             toast('Lozinka promijenjena');
         } catch (err) { toast(err.message, 'error'); }
     });
+
+    const resend = $('#resend-verif');
+    if (resend) resend.addEventListener('click', async () => {
+        resend.disabled = true;
+        try {
+            await api('/api/auth/resend-verification', { method: 'POST' });
+            toast('Link za potvrdu je poslat na email');
+        } catch (err) {
+            toast(err.message, 'error');
+            resend.disabled = false;
+        }
+    });
 }
 
 // Administracija
@@ -2363,16 +2386,35 @@ if ('serviceWorker' in navigator) {
 
 // Inicijalizacija
 (async function init() {
-    // Link iz emaila za reset lozinke: prikazi formu za novu lozinku
     const params = new URLSearchParams(location.search);
+
+    // Link iz emaila za reset lozinke: prikazi formu za novu lozinku
     if (params.get('reset')) {
         resetToken = params.get('reset');
         showAuth();
         switchAuthTab('reset');
         return;
     }
+
+    // Link iz emaila za potvrdu adrese: potvrdi token pa nastavi normalno
+    if (params.get('verify')) {
+        const token = params.get('verify');
+        history.replaceState(null, '', location.pathname);
+        try {
+            await api('/api/auth/verify-email', { method: 'POST', body: { token } });
+            if (state.user) state.user.emailVerified = true;
+            verifyNotice = { ok: true, message: 'Email adresa je potvrđena.' };
+        } catch (err) {
+            verifyNotice = { ok: false, message: err.message };
+        }
+    }
+
     if (!state.token) {
         showAuth();
+        if (verifyNotice) {
+            verifyNotice.ok ? showAuthSuccess(verifyNotice.message) : showAuthError(verifyNotice.message);
+            verifyNotice = null;
+        }
         return;
     }
     try {
@@ -2380,6 +2422,10 @@ if ('serviceWorker' in navigator) {
         state.user = me;
         localStorage.setItem('pfm_user', JSON.stringify(me));
         showApp();
+        if (verifyNotice) {
+            toast(verifyNotice.message);
+            verifyNotice = null;
+        }
     } catch (err) {
         logout();
     }

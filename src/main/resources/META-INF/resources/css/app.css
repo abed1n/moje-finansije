@@ -355,6 +355,22 @@ input[type="checkbox"] { box-shadow: none; accent-color: var(--brand); }
 }
 :root[data-theme="dark"] .form-success { border-color: rgba(25, 158, 112, .35); }
 
+.verif-badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 700;
+}
+.verif-badge.ok { background: var(--status-good-soft, #e7f6ee); color: var(--status-good, #067a48); }
+.verif-badge.pending { background: var(--danger-soft); color: var(--danger); }
+.verif-cta {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+.verif-cta p { font-size: 12.5px; color: var(--text-3); margin-bottom: 10px; line-height: 1.5; }
+
 /* Tabele */
 .table-wrap { overflow-x: auto; margin: 0 -6px; }
 table { width: 100%; border-collapse: collapse; font-size: 13.5px; }

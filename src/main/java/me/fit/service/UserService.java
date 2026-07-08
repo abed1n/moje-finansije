@@ -33,4 +33,13 @@ public class UserService {
                 .findFirst()
                 .ifPresent(user -> user.setRole(Role.ADMIN));
     }
+
+    @Transactional
+    public void markEmailVerified(String email) {
+        em.createNamedQuery(User.GET_BY_EMAIL, User.class)
+                .setParameter("email", email)
+                .getResultStream()
+                .findFirst()
+                .ifPresent(user -> user.setEmailVerified(true));
+    }
 }

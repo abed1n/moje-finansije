@@ -126,6 +126,9 @@ class AuthResourceTest {
                 .when().post("/api/auth/register")
                 .then().statusCode(201);
 
+        // Odbaci verifikacioni email poslat pri registraciji da ostane samo onaj za reset
+        mailbox.clear();
+
         // Zahtjev za reset uvijek vraca 204 i salje email s linkom
         given().contentType("application/json")
                 .body(Map.of("email", email))
@@ -160,6 +163,50 @@ class AuthResourceTest {
         given().contentType("application/json")
                 .body(Map.of("token", token, "newPassword", "trecaLozinka"))
                 .when().post("/api/auth/reset-password")
+                .then().statusCode(400);
+    }
+
+    @Test
+    void registerSendsVerificationAndVerifyWorks() {
+        String email = "verify-" + System.nanoTime() + "@pfm.me";
+
+        String token = given().contentType("application/json")
+                .body(Map.of("name", "Verify", "email", email, "password", "tajna123"))
+                .when().post("/api/auth/register")
+                .then().statusCode(201)
+                .body("user.emailVerified", equalTo(false))
+                .extract().path("token");
+
+        // Verifikacioni email je poslat pri registraciji
+        List<Mail> sent = mailbox.getMailsSentTo(email);
+        assertEquals(1, sent.size(), "Očekivali smo verifikacioni email");
+        String text = sent.getFirst().getText();
+        int idx = text.indexOf("?verify=");
+        assertTrue(idx > 0, "Email mora sadržati link za potvrdu");
+        String verifyToken = text.substring(idx + "?verify=".length(), idx + "?verify=".length() + 64);
+
+        // Prije potvrde /me pokazuje da adresa nije potvrđena
+        given().header("Authorization", "Bearer " + token)
+                .when().get("/api/auth/me")
+                .then().statusCode(200)
+                .body("emailVerified", equalTo(false));
+
+        // Potvrda tokenom
+        given().contentType("application/json")
+                .body(Map.of("token", verifyToken))
+                .when().post("/api/auth/verify-email")
+                .then().statusCode(204);
+
+        // Sada je adresa potvrđena
+        given().header("Authorization", "Bearer " + token)
+                .when().get("/api/auth/me")
+                .then().statusCode(200)
+                .body("emailVerified", equalTo(true));
+
+        // Ponovna upotreba istog tokena je odbijena
+        given().contentType("application/json")
+                .body(Map.of("token", verifyToken))
+                .when().post("/api/auth/verify-email")
                 .then().statusCode(400);
     }
 

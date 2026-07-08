@@ -17,6 +17,7 @@ import me.fit.exception.TooManyRequestsException;
 import me.fit.security.CurrentUser;
 import me.fit.security.LoginAttemptService;
 import me.fit.service.AuthService;
+import me.fit.service.EmailVerificationService;
 import me.fit.service.PasswordResetService;
 import me.fit.service.RefreshTokenService;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -45,6 +46,9 @@ public class AuthResource {
     @Inject
     PasswordResetService passwordReset;
 
+    @Inject
+    EmailVerificationService emailVerification;
+
     @ConfigProperty(name = "app.auth.cookie-secure", defaultValue = "false")
     boolean cookieSecure;
 
@@ -53,6 +57,7 @@ public class AuthResource {
     @PermitAll
     public Response register(@Valid RegisterRequest request) {
         AuthResponse response = authService.register(request);
+        emailVerification.sendFor(response.user().id());
         String refresh = refreshTokens.issue(response.user().id());
         return Response.status(Response.Status.CREATED)
                 .entity(response)
@@ -120,6 +125,25 @@ public class AuthResource {
     @PermitAll
     public Response resetPassword(@Valid ResetPasswordRequest request) {
         passwordReset.reset(request.token(), request.newPassword());
+        return Response.noContent().build();
+    }
+
+    // Potvrda email adrese preko tokena iz linka
+    @POST
+    @Path("/verify-email")
+    @PermitAll
+    public Response verifyEmail(@Valid VerifyEmailRequest request) {
+        emailVerification.verify(request.token());
+        return Response.noContent().build();
+    }
+
+    // Ponovno slanje linka za potvrdu (za prijavljenog korisnika koji jos nije potvrdio)
+    @POST
+    @Path("/resend-verification")
+    @Authenticated
+    @Consumes(MediaType.WILDCARD)
+    public Response resendVerification() {
+        emailVerification.sendFor(currentUser.require().getId());
         return Response.noContent().build();
     }
 

@@ -79,6 +79,11 @@ public class DemoDataSeeder {
         userService.promoteToAdmin("admin@pfm.me");
 
         authService.register(new RegisterRequest("Demo Korisnik", "demo@pfm.me", "demo123"));
+
+        // Demo nalozi su odmah potvrdjeni da bi bili spremni za prikaz
+        userService.markEmailVerified("admin@pfm.me");
+        userService.markEmailVerified("demo@pfm.me");
+
         User demo = em.createNamedQuery(User.GET_BY_EMAIL, User.class)
                 .setParameter("email", "demo@pfm.me")
                 .getSingleResult();

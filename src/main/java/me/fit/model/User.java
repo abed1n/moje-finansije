@@ -40,6 +40,13 @@ public class User {
     // Kad je posljednji put uvezen bankovni izvod (za podsjetnik)
     private Instant lastImportAt;
 
+    @Column(nullable = false)
+    private boolean emailVerified = false;
+
+    // Hash tokena za potvrdu email adrese; null kad je adresa potvrđena
+    @Column(length = 64)
+    private String emailVerificationToken;
+
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "profile_id")
     private Profile profile;
@@ -122,6 +129,22 @@ public class User {
 
     public void setLastImportAt(Instant lastImportAt) {
         this.lastImportAt = lastImportAt;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerified;
+    }
+
+    public void setEmailVerified(boolean emailVerified) {
+        this.emailVerified = emailVerified;
+    }
+
+    public String getEmailVerificationToken() {
+        return emailVerificationToken;
+    }
+
+    public void setEmailVerificationToken(String emailVerificationToken) {
+        this.emailVerificationToken = emailVerificationToken;
     }
 
     public Profile getProfile() {
