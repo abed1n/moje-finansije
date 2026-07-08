@@ -41,10 +41,10 @@ services:
       # Osnovni URL za linkove u emailu i Secure flag na kolacicu (za HTTPS deploy)
       APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
-      # Za produkciju: generisi vlastite kljuceve (vidi .env.example),
-      # mountaj ih dole i otkomentarisi ove dvije varijable
-      # JWT_PRIVATE_KEY_LOCATION: /app/keys/privateKey.pem
-      # JWT_PUBLIC_KEY_LOCATION: /app/keys/publicKey.pem
+      # JWT kljucevi. Podrazumijevano demo kljucevi iz slike; za produkciju
+      # postavi putanje u .env i otkomentarisi mount kljuceva dole.
+      JWT_PRIVATE_KEY_LOCATION: ${JWT_PRIVATE_KEY_LOCATION:-jwt/privateKey.pem}
+      JWT_PUBLIC_KEY_LOCATION: ${JWT_PUBLIC_KEY_LOCATION:-jwt/publicKey.pem}
     volumes:
       - pfm-uploads:/app/uploads
       # - ./keys:/app/keys:ro
