@@ -8,7 +8,10 @@ pokrece kao jedna aplikacija.
 
 ## Sta aplikacija ima
 
-- registracija i prijava (JWT token, lozinke se cuvaju kao BCrypt hash), uloge USER i ADMIN
+- registracija i prijava (JWT token, lozinke kao BCrypt hash), uloge USER i ADMIN
+- prijava putem Google naloga (Google Identity Services, token se provjerava na backendu)
+- obavezna potvrda email adrese prije prijave (link sa rokom vazenja), reset lozinke
+- kratkotrajni pristupni token uz rotirajuci refresh token, ogranicenje broja pokusaja prijave
 - racuni (tekuci, stednja, gotovina, kartica) sa detaljima banke, stanje se samo azurira
 - transferi izmedju racuna (ne ulaze u prihode/rashode, sa istorijom i ponistavanjem)
 - racuni u stranim valutama se u ukupnom stanju preracunavaju u EUR po ECB kursu
@@ -126,6 +129,32 @@ Kompletna OpenAPI specifikacija je na `/q/openapi`.
 | UPLOADS_DIR | folder za priloge | uploads |
 | JWT_PRIVATE_KEY_LOCATION | putanja do privatnog kljuca za potpis tokena | jwt/privateKey.pem (demo) |
 | JWT_PUBLIC_KEY_LOCATION | putanja do javnog kljuca za verifikaciju | jwt/publicKey.pem (demo) |
+| APP_BASE_URL | osnovni URL za linkove u email porukama | http://localhost:8080 |
+| COOKIE_SECURE | Secure flag na refresh kolacicu (ukljuciti uz HTTPS) | false |
+| GOOGLE_CLIENT_ID | client id iz Google Cloud konzole; prazno = Google prijava iskljucena | prazno |
+| MAILER_MOCK | mock slanje emaila (link se ispisuje u log umjesto slanja) | true |
+| MAILER_HOST / MAILER_PORT | SMTP server i port (kad MAILER_MOCK=false) | smtp.example.com / 587 |
+| MAILER_USERNAME / MAILER_PASSWORD | SMTP kredencijali | prazno |
+| MAILER_FROM | posiljalac emaila | Moje finansije <no-reply@moje-finansije.me> |
 
 Aplikacija se izlaze javno iskljucivo iza reverse proxyja (nginx/Caddy/Traefik)
-koji terminira HTTPS.
+koji terminira HTTPS. Uz HTTPS postaviti `COOKIE_SECURE=true`.
+
+### Google prijava
+
+1. U [Google Cloud konzoli](https://console.cloud.google.com/) napraviti OAuth 2.0
+   Client ID tipa "Web application".
+2. Pod "Authorized JavaScript origins" dodati adresu aplikacije (npr.
+   `https://moje-finansije.me`, a za lokalni rad `http://localhost:8080`).
+3. Postaviti dobijeni client id u `GOOGLE_CLIENT_ID`. Dugme "Nastavi putem Google
+   naloga" se tada automatski pojavi na prijavi i registraciji.
+
+Backend provjerava svaki Google token kod Google-a i potvrdjuje da je izdat bas
+ovom client id-u, pa se frontendu nikad ne vjeruje na rijec.
+
+### Slanje emaila
+
+Reset lozinke i potvrda email adrese salju se emailom. Podrazumijevano je
+`MAILER_MOCK=true` pa se link samo ispise u log (pogodno za demo). Za pravo
+slanje postaviti `MAILER_MOCK=false` i SMTP podatke (`MAILER_HOST`, `MAILER_PORT`,
+`MAILER_USERNAME`, `MAILER_PASSWORD`, `MAILER_FROM`).
