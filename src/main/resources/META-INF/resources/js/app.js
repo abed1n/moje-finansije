@@ -11,6 +11,9 @@ const state = {
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
+// Token iz linka za reset lozinke (?reset=...), postavlja se pri inicijalizaciji
+let resetToken = null;
+
 function esc(value) {
     return String(value ?? '').replace(/[&<>"']/g, ch => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -506,7 +509,15 @@ function showApp() {
 }
 
 function showAuthError(message) {
+    $('#auth-success').classList.add('hidden');
     const el = $('#auth-error');
+    el.textContent = message;
+    el.classList.remove('hidden');
+}
+
+function showAuthSuccess(message) {
+    $('#auth-error').classList.add('hidden');
+    const el = $('#auth-success');
     el.textContent = message;
     el.classList.remove('hidden');
 }
@@ -514,13 +525,49 @@ function showAuthError(message) {
 $('#tab-login').addEventListener('click', () => switchAuthTab('login'));
 $('#tab-register').addEventListener('click', () => switchAuthTab('register'));
 
-function switchAuthTab(tab) {
-    $('#tab-login').classList.toggle('active', tab === 'login');
-    $('#tab-register').classList.toggle('active', tab === 'register');
-    $('#login-form').classList.toggle('hidden', tab !== 'login');
-    $('#register-form').classList.toggle('hidden', tab !== 'register');
+// Prikazuje jednu od formi (login/register/forgot/reset) i sakriva ostale.
+// Kartice Prijava/Registracija se vide samo za login i register.
+function switchAuthTab(mode) {
+    const tabsVisible = mode === 'login' || mode === 'register';
+    $('#tab-login').classList.toggle('active', mode === 'login');
+    $('#tab-register').classList.toggle('active', mode === 'register');
+    $('.auth-tabs').classList.toggle('hidden', !tabsVisible);
+    $('#login-form').classList.toggle('hidden', mode !== 'login');
+    $('#register-form').classList.toggle('hidden', mode !== 'register');
+    $('#forgot-form').classList.toggle('hidden', mode !== 'forgot');
+    $('#reset-form').classList.toggle('hidden', mode !== 'reset');
     $('#auth-error').classList.add('hidden');
+    $('#auth-success').classList.add('hidden');
 }
+
+$('#forgot-link').addEventListener('click', () => switchAuthTab('forgot'));
+$('#forgot-back').addEventListener('click', () => switchAuthTab('login'));
+
+$('#forgot-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const email = new FormData(e.target).get('email');
+    try {
+        await api('/api/auth/forgot-password', { method: 'POST', body: { email } });
+        switchAuthTab('login');
+        showAuthSuccess('Ako nalog postoji, poslali smo link za novu lozinku na email.');
+    } catch (err) {
+        showAuthError(err.message);
+    }
+});
+
+$('#reset-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const newPassword = new FormData(e.target).get('newPassword');
+    try {
+        await api('/api/auth/reset-password', { method: 'POST', body: { token: resetToken, newPassword } });
+        resetToken = null;
+        history.replaceState(null, '', location.pathname); // ukloni token iz URL-a
+        switchAuthTab('login');
+        showAuthSuccess('Lozinka je promijenjena. Možete se prijaviti.');
+    } catch (err) {
+        showAuthError(err.message);
+    }
+});
 
 $('#login-form').addEventListener('submit', async e => {
     e.preventDefault();
@@ -2316,6 +2363,14 @@ if ('serviceWorker' in navigator) {
 
 // Inicijalizacija
 (async function init() {
+    // Link iz emaila za reset lozinke: prikazi formu za novu lozinku
+    const params = new URLSearchParams(location.search);
+    if (params.get('reset')) {
+        resetToken = params.get('reset');
+        showAuth();
+        switchAuthTab('reset');
+        return;
+    }
     if (!state.token) {
         showAuth();
         return;

@@ -9,14 +9,11 @@ import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.core.Response;
 import me.fit.model.RefreshToken;
 import me.fit.model.User;
+import me.fit.security.Tokens;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import java.security.SecureRandom;
-import java.security.MessageDigest;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HexFormat;
 import java.util.List;
 
 // Izdavanje, rotacija i opoziv refresh tokena. Sama vrijednost tokena se vraca
@@ -30,15 +27,13 @@ public class RefreshTokenService {
     @ConfigProperty(name = "app.jwt.refresh-token-days", defaultValue = "30")
     long refreshDays;
 
-    private final SecureRandom random = new SecureRandom();
-
     // Novi refresh token za korisnika; vraca sirovu vrijednost za kolacic
     @Transactional
     public String issue(Long userId) {
-        String raw = randomToken();
+        String raw = Tokens.random();
         RefreshToken token = new RefreshToken();
         token.setUser(em.getReference(User.class, userId));
-        token.setTokenHash(hash(raw));
+        token.setTokenHash(Tokens.sha256(raw));
         token.setExpiresAt(Instant.now().plus(Duration.ofDays(refreshDays)));
         em.persist(token);
         return raw;
@@ -68,6 +63,14 @@ public class RefreshTokenService {
         }
     }
 
+    // Ponisti sve sesije korisnika (npr. nakon reset lozinke)
+    @Transactional
+    public void revokeAllForUser(Long userId) {
+        em.createQuery("delete from RefreshToken t where t.user.id = :id")
+                .setParameter("id", userId)
+                .executeUpdate();
+    }
+
     // Povremeno brise istekle tokene da tabela ne raste
     @Scheduled(every = "6h")
     @Transactional
@@ -86,25 +89,9 @@ public class RefreshTokenService {
             return null;
         }
         List<RefreshToken> found = em.createNamedQuery(RefreshToken.GET_BY_HASH, RefreshToken.class)
-                .setParameter("hash", hash(rawToken))
+                .setParameter("hash", Tokens.sha256(rawToken))
                 .getResultList();
         return found.isEmpty() ? null : found.getFirst();
-    }
-
-    private String randomToken() {
-        byte[] bytes = new byte[32];
-        random.nextBytes(bytes);
-        return HexFormat.of().formatHex(bytes);
-    }
-
-    private String hash(String value) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] out = digest.digest(value.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(out);
-        } catch (Exception e) {
-            throw new IllegalStateException("SHA-256 nije dostupan", e);
-        }
     }
 
     public record Rotated(Long userId, String rawToken) {

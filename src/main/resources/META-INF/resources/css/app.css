@@ -343,6 +343,18 @@ input[type="checkbox"] { box-shadow: none; accent-color: var(--brand); }
     margin-top: 14px;
 }
 
+.form-success {
+    background: var(--status-good-soft, #e7f6ee);
+    color: var(--status-good, #067a48);
+    border: 1px solid #b7e2c9;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 14px;
+}
+:root[data-theme="dark"] .form-success { border-color: rgba(25, 158, 112, .35); }
+
 /* Tabele */
 .table-wrap { overflow-x: auto; margin: 0 -6px; }
 table { width: 100%; border-collapse: collapse; font-size: 13.5px; }

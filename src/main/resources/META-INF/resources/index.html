@@ -87,6 +87,7 @@
                                 <input type="password" name="password" required autocomplete="current-password" placeholder="Vaša lozinka">
                             </label>
                             <button type="submit" class="btn btn-primary btn-block">Prijavi se</button>
+                            <button type="button" id="forgot-link" class="auth-link">Zaboravili ste lozinku?</button>
                         </form>
 
                         <form id="register-form" class="auth-form hidden">
@@ -102,7 +103,25 @@
                             <button type="submit" class="btn btn-primary btn-block">Kreiraj nalog</button>
                         </form>
 
+                        <form id="forgot-form" class="auth-form hidden">
+                            <p class="auth-note">Unesite email vašeg naloga i poslaćemo vam link za novu lozinku.</p>
+                            <label>Email
+                                <input type="email" name="email" required autocomplete="email" placeholder="vas@email.me">
+                            </label>
+                            <button type="submit" class="btn btn-primary btn-block">Pošalji link</button>
+                            <button type="button" id="forgot-back" class="auth-link">Nazad na prijavu</button>
+                        </form>
+
+                        <form id="reset-form" class="auth-form hidden">
+                            <p class="auth-note">Postavite novu lozinku za vaš nalog.</p>
+                            <label>Nova lozinka
+                                <input type="password" name="newPassword" required minlength="6" autocomplete="new-password" placeholder="najmanje 6 znakova">
+                            </label>
+                            <button type="submit" class="btn btn-primary btn-block">Sačuvaj lozinku</button>
+                        </form>
+
                         <div id="auth-error" class="form-error hidden"></div>
+                        <div id="auth-success" class="form-success hidden"></div>
                     </div>
                 </div>
             </div>

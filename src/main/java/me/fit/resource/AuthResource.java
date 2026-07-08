@@ -17,6 +17,7 @@ import me.fit.exception.TooManyRequestsException;
 import me.fit.security.CurrentUser;
 import me.fit.security.LoginAttemptService;
 import me.fit.service.AuthService;
+import me.fit.service.PasswordResetService;
 import me.fit.service.RefreshTokenService;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -40,6 +41,9 @@ public class AuthResource {
 
     @Inject
     RefreshTokenService refreshTokens;
+
+    @Inject
+    PasswordResetService passwordReset;
 
     @ConfigProperty(name = "app.auth.cookie-secure", defaultValue = "false")
     boolean cookieSecure;
@@ -100,6 +104,23 @@ public class AuthResource {
             refreshTokens.revoke(refreshToken);
         }
         return Response.noContent().cookie(expiredRefreshCookie()).build();
+    }
+
+    // Zahtjev za reset lozinke: uvijek 204 da se ne otkrije postoji li nalog
+    @POST
+    @Path("/forgot-password")
+    @PermitAll
+    public Response forgotPassword(@Valid ForgotPasswordRequest request) {
+        passwordReset.requestReset(request.email());
+        return Response.noContent().build();
+    }
+
+    @POST
+    @Path("/reset-password")
+    @PermitAll
+    public Response resetPassword(@Valid ResetPasswordRequest request) {
+        passwordReset.reset(request.token(), request.newPassword());
+        return Response.noContent().build();
     }
 
     private NewCookie refreshCookie(String value) {

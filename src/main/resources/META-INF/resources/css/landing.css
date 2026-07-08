@@ -316,6 +316,18 @@
 .auth-form label { display: flex; flex-direction: column; gap: 7px; font-size: 12.5px; font-weight: 600; color: var(--text-2); }
 .auth-hint { font-size: 12.5px; color: var(--text-3); text-align: center; margin-top: 2px; }
 .auth-hint strong { color: var(--text-2); font-weight: 600; }
+.auth-note { font-size: 12.5px; color: var(--text-3); line-height: 1.5; margin-bottom: -2px; }
+.auth-link {
+    background: none;
+    border: 0;
+    padding: 0;
+    align-self: center;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--lp-mint-ink, #0c8f5f);
+    cursor: pointer;
+}
+.auth-link:hover { text-decoration: underline; }
 
 /* ---------------- Marquee traka ---------------- */
 .lp-marquee {

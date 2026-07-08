@@ -1,17 +1,32 @@
 package me.fit.resource;
 
+import io.quarkus.mailer.Mail;
+import io.quarkus.mailer.MockMailbox;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.response.Response;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
 class AuthResourceTest {
+
+    @Inject
+    MockMailbox mailbox;
+
+    @BeforeEach
+    void clearMailbox() {
+        mailbox.clear();
+    }
 
     @Test
     void registerLoginAndMe() {
@@ -100,6 +115,60 @@ class AuthResourceTest {
         given().cookie("refresh_token", newCookie)
                 .when().post("/api/auth/refresh")
                 .then().statusCode(401);
+    }
+
+    @Test
+    void forgotPasswordSendsEmailAndResetWorks() {
+        String email = "reset-" + System.nanoTime() + "@pfm.me";
+
+        given().contentType("application/json")
+                .body(Map.of("name", "Reset", "email", email, "password", "staraLozinka"))
+                .when().post("/api/auth/register")
+                .then().statusCode(201);
+
+        // Zahtjev za reset uvijek vraca 204 i salje email s linkom
+        given().contentType("application/json")
+                .body(Map.of("email", email))
+                .when().post("/api/auth/forgot-password")
+                .then().statusCode(204);
+
+        List<Mail> sent = mailbox.getMailsSentTo(email);
+        assertEquals(1, sent.size(), "Očekivali smo tačno jedan email za reset");
+        String text = sent.getFirst().getText();
+        int idx = text.indexOf("?reset=");
+        assertTrue(idx > 0, "Email mora sadržati link za reset");
+        String token = text.substring(idx + "?reset=".length(), idx + "?reset=".length() + 64);
+
+        // Reset sa tokenom postavlja novu lozinku
+        given().contentType("application/json")
+                .body(Map.of("token", token, "newPassword", "novaLozinka"))
+                .when().post("/api/auth/reset-password")
+                .then().statusCode(204);
+
+        // Stara lozinka vise ne radi, nova radi
+        given().contentType("application/json")
+                .body(Map.of("email", email, "password", "staraLozinka"))
+                .when().post("/api/auth/login")
+                .then().statusCode(401);
+
+        given().contentType("application/json")
+                .body(Map.of("email", email, "password", "novaLozinka"))
+                .when().post("/api/auth/login")
+                .then().statusCode(200);
+
+        // Token je jednokratan - ponovna upotreba je odbijena
+        given().contentType("application/json")
+                .body(Map.of("token", token, "newPassword", "trecaLozinka"))
+                .when().post("/api/auth/reset-password")
+                .then().statusCode(400);
+    }
+
+    @Test
+    void forgotPasswordForUnknownEmailStillReturns204() {
+        given().contentType("application/json")
+                .body(Map.of("email", "nepostoji-" + System.nanoTime() + "@pfm.me"))
+                .when().post("/api/auth/forgot-password")
+                .then().statusCode(204);
     }
 
     @Test
