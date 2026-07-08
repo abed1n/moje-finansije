@@ -1,5 +1,7 @@
 # Personal Finance Manager
 
+[![CI](https://github.com/abed1n/moje-finansije/actions/workflows/ci.yml/badge.svg)](https://github.com/abed1n/moje-finansije/actions/workflows/ci.yml)
+
 Aplikacija za upravljanje licnim finansijama radjena u Quarkusu (Java 25) sa PostgreSQL bazom.
 Frontend je obican HTML/CSS/JS (bez build koraka) i servira ga sam Quarkus, tako da se sve
 pokrece kao jedna aplikacija.
