@@ -52,17 +52,15 @@ public class AuthResource {
     @ConfigProperty(name = "app.auth.cookie-secure", defaultValue = "false")
     boolean cookieSecure;
 
+    // Registracija kreira neverifikovan nalog i salje link za potvrdu.
+    // Ne prijavljuje korisnika - prvo mora potvrditi email adresu.
     @POST
     @Path("/register")
     @PermitAll
     public Response register(@Valid RegisterRequest request) {
-        AuthResponse response = authService.register(request);
-        emailVerification.sendFor(response.user().id());
-        String refresh = refreshTokens.issue(response.user().id());
-        return Response.status(Response.Status.CREATED)
-                .entity(response)
-                .cookie(refreshCookie(refresh))
-                .build();
+        UserDto user = authService.register(request);
+        emailVerification.sendFor(user.id());
+        return Response.status(Response.Status.CREATED).entity(user).build();
     }
 
     @POST
@@ -137,13 +135,13 @@ public class AuthResource {
         return Response.noContent().build();
     }
 
-    // Ponovno slanje linka za potvrdu (za prijavljenog korisnika koji jos nije potvrdio)
+    // Ponovno slanje linka za potvrdu po email adresi. Uvijek 204 da se ne
+    // otkrije postoji li nalog niti da li je vec potvrdjen.
     @POST
     @Path("/resend-verification")
-    @Authenticated
-    @Consumes(MediaType.WILDCARD)
-    public Response resendVerification() {
-        emailVerification.sendFor(currentUser.require().getId());
+    @PermitAll
+    public Response resendVerification(@Valid ResendVerificationRequest request) {
+        emailVerification.resendByEmail(request.email());
         return Response.noContent().build();
     }
 

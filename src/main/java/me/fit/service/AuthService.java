@@ -27,8 +27,9 @@ public class AuthService {
     @Inject
     CategoryService categoryService;
 
+    // Registracija ne prijavljuje korisnika: prvo mora potvrditi email adresu.
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
+    public UserDto register(RegisterRequest request) {
         String email = request.email().trim().toLowerCase();
         if (!findByEmail(email).isEmpty()) {
             throw new ConflictException("Korisnik sa ovim emailom već postoji");
@@ -39,16 +40,23 @@ public class AuthService {
         user.setPasswordHash(BcryptUtil.bcryptHash(request.password()));
         em.persist(user);
         categoryService.seedDefaultCategories(user);
-        return new AuthResponse(tokenService.generateToken(user), UserDto.from(user));
+        return UserDto.from(user);
     }
 
     public AuthResponse login(LoginRequest request) {
         // Email se pri registraciji sprema kao lowercase, pa i ovdje normalizujemo
         List<User> users = findByEmail(request.email().trim().toLowerCase());
-        if (users.isEmpty() || !BcryptUtil.matches(request.password(), users.getFirst().getPasswordHash())) {
+        User user = users.isEmpty() ? null : users.getFirst();
+        // Nalozi kreirani preko Google-a nemaju lozinku
+        if (user == null || user.getPasswordHash() == null
+                || !BcryptUtil.matches(request.password(), user.getPasswordHash())) {
             throw new ClientErrorException("Pogrešan email ili lozinka", Response.Status.UNAUTHORIZED);
         }
-        User user = users.getFirst();
+        if (!user.isEmailVerified()) {
+            throw new ClientErrorException(
+                    "Potvrdite email adresu prije prijave. Provjerite inbox za link za potvrdu.",
+                    Response.Status.FORBIDDEN);
+        }
         return new AuthResponse(tokenService.generateToken(user), UserDto.from(user));
     }
 

@@ -105,7 +105,9 @@ async function api(path, options = {}, retried = false) {
             if (data.error) message = data.error;
             if (data.details && data.details.length) message += ': ' + data.details.join(', ');
         } catch (ignored) { /* nije JSON */ }
-        throw new Error(message);
+        const error = new Error(message);
+        error.status = res.status;
+        throw error;
     }
     if (res.status === 204) return null;
     return res.json();
@@ -540,6 +542,7 @@ function switchAuthTab(mode) {
     $('#reset-form').classList.toggle('hidden', mode !== 'reset');
     $('#auth-error').classList.add('hidden');
     $('#auth-success').classList.add('hidden');
+    $('#auth-resend').classList.add('hidden');
 }
 
 $('#forgot-link').addEventListener('click', () => switchAuthTab('forgot'));
@@ -574,29 +577,54 @@ $('#reset-form').addEventListener('submit', async e => {
 $('#login-form').addEventListener('submit', async e => {
     e.preventDefault();
     const form = new FormData(e.target);
+    const email = form.get('email');
     try {
         const auth = await api('/api/auth/login', {
             method: 'POST',
-            body: { email: form.get('email'), password: form.get('password') }
+            body: { email, password: form.get('password') }
         });
         saveAuth(auth);
         showApp();
     } catch (err) {
         showAuthError(err.message);
+        // 403 = nalog nije verifikovan: ponudi ponovno slanje linka
+        if (err.status === 403) showResendVerification(email);
     }
 });
+
+// Prikazuje dugme za ponovno slanje verifikacionog linka nakon neuspjele prijave
+function showResendVerification(email) {
+    const box = $('#auth-resend');
+    box.classList.remove('hidden');
+    const btn = $('#resend-verif-link');
+    btn.disabled = false;
+    btn.onclick = async () => {
+        btn.disabled = true;
+        try {
+            await api('/api/auth/resend-verification', { method: 'POST', body: { email } });
+            box.classList.add('hidden');
+            showAuthSuccess('Poslali smo novi link za potvrdu na ' + email + '.');
+        } catch (err) {
+            showAuthError(err.message);
+            btn.disabled = false;
+        }
+    };
+}
 
 $('#register-form').addEventListener('submit', async e => {
     e.preventDefault();
     const form = new FormData(e.target);
+    const email = form.get('email');
     try {
-        const auth = await api('/api/auth/register', {
+        await api('/api/auth/register', {
             method: 'POST',
-            body: { name: form.get('name'), email: form.get('email'), password: form.get('password') }
+            body: { name: form.get('name'), email, password: form.get('password') }
         });
-        saveAuth(auth);
-        toast('Dobrodošli, ' + auth.user.name + '!');
-        showApp();
+        // Registracija ne prijavljuje - korisnik prvo mora potvrditi email
+        e.target.reset();
+        switchAuthTab('login');
+        showAuthSuccess('Nalog je kreiran. Poslali smo link za potvrdu na ' + email
+            + ' — potvrdite adresu da biste se prijavili.');
     } catch (err) {
         showAuthError(err.message);
     }
@@ -2345,7 +2373,7 @@ async function renderProfile() {
     if (resend) resend.addEventListener('click', async () => {
         resend.disabled = true;
         try {
-            await api('/api/auth/resend-verification', { method: 'POST' });
+            await api('/api/auth/resend-verification', { method: 'POST', body: { email: me.email } });
             toast('Link za potvrdu je poslat na email');
         } catch (err) {
             toast(err.message, 'error');

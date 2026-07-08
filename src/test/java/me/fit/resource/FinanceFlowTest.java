@@ -1,8 +1,11 @@
 package me.fit.resource;
 
+import io.quarkus.mailer.Mail;
+import io.quarkus.mailer.MockMailbox;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -16,12 +19,31 @@ import static org.hamcrest.Matchers.*;
 @QuarkusTest
 class FinanceFlowTest {
 
+    @Inject
+    MockMailbox mailbox;
+
+    // Registruje korisnika, potvrdi email iz mock poruke i prijavi se za pristupni token
     private String registerAndGetToken() {
         String email = "flow-" + System.nanoTime() + "@pfm.me";
-        return given().contentType(ContentType.JSON)
-                .body(Map.of("name", "Flow Test", "email", email, "password", "tajna123"))
+        String password = "tajna123";
+        given().contentType(ContentType.JSON)
+                .body(Map.of("name", "Flow Test", "email", email, "password", password))
                 .when().post("/api/auth/register")
-                .then().statusCode(201)
+                .then().statusCode(201);
+
+        List<Mail> mails = mailbox.getMailsSentTo(email);
+        String text = mails.getLast().getText();
+        int idx = text.indexOf("?verify=");
+        String verifyToken = text.substring(idx + "?verify=".length(), idx + "?verify=".length() + 64);
+        given().contentType(ContentType.JSON)
+                .body(Map.of("token", verifyToken))
+                .when().post("/api/auth/verify-email")
+                .then().statusCode(204);
+
+        return given().contentType(ContentType.JSON)
+                .body(Map.of("email", email, "password", password))
+                .when().post("/api/auth/login")
+                .then().statusCode(200)
                 .extract().path("token");
     }
 

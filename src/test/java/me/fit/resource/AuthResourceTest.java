@@ -29,38 +29,40 @@ class AuthResourceTest {
     }
 
     @Test
-    void registerLoginAndMe() {
+    void registerVerifyLoginAndMe() {
         String email = "auth-" + System.nanoTime() + "@pfm.me";
 
-        String token = given()
-                .contentType("application/json")
+        // Registracija kreira neverifikovan nalog i ne vraca sesiju
+        given().contentType("application/json")
                 .body(Map.of("name", "Test Korisnik", "email", email, "password", "tajna123"))
                 .when().post("/api/auth/register")
                 .then().statusCode(201)
-                .body("token", notNullValue())
-                .body("user.email", equalTo(email))
-                .body("user.role", equalTo("USER"))
-                .extract().path("token");
+                .body("email", equalTo(email))
+                .body("emailVerified", equalTo(false));
+
+        // Prijava prije potvrde emaila je odbijena (403)
+        given().contentType("application/json")
+                .body(Map.of("email", email, "password", "tajna123"))
+                .when().post("/api/auth/login")
+                .then().statusCode(403);
+
+        // Potvrda emaila pa uspjesna prijava
+        verify(verificationTokenFor(email));
+        String token = login(email, "tajna123");
 
         given().header("Authorization", "Bearer " + token)
                 .when().get("/api/auth/me")
                 .then().statusCode(200)
-                .body("email", equalTo(email));
+                .body("email", equalTo(email))
+                .body("emailVerified", equalTo(true));
 
-        // dupli email -> 409
+        // Dupli email -> 409
         given().contentType("application/json")
                 .body(Map.of("name", "Duplikat", "email", email, "password", "tajna123"))
                 .when().post("/api/auth/register")
                 .then().statusCode(409);
 
-        // login sa ispravnom lozinkom
-        given().contentType("application/json")
-                .body(Map.of("email", email, "password", "tajna123"))
-                .when().post("/api/auth/login")
-                .then().statusCode(200)
-                .body("token", notNullValue());
-
-        // login sa pogresnom lozinkom
+        // Pogresna lozinka -> 401
         given().contentType("application/json")
                 .body(Map.of("email", email, "password", "pogresna"))
                 .when().post("/api/auth/login")
@@ -73,14 +75,46 @@ class AuthResourceTest {
     }
 
     @Test
+    void registerValidationFails() {
+        given().contentType("application/json")
+                .body(Map.of("name", "", "email", "nije-email", "password", "123"))
+                .when().post("/api/auth/register")
+                .then().statusCode(400);
+    }
+
+    @Test
+    void registerSendsVerificationEmailAndTokenIsSingleUse() {
+        String email = "verify-" + System.nanoTime() + "@pfm.me";
+
+        given().contentType("application/json")
+                .body(Map.of("name", "Verify", "email", email, "password", "tajna123"))
+                .when().post("/api/auth/register")
+                .then().statusCode(201);
+
+        // Tacno jedan verifikacioni email
+        List<Mail> sent = mailbox.getMailsSentTo(email);
+        assertEquals(1, sent.size(), "Očekivali smo verifikacioni email");
+
+        String verifyToken = verificationTokenFor(email);
+        verify(verifyToken);
+
+        // Ponovna upotreba istog tokena je odbijena
+        given().contentType("application/json")
+                .body(Map.of("token", verifyToken))
+                .when().post("/api/auth/verify-email")
+                .then().statusCode(400);
+    }
+
+    @Test
     void refreshRotatesTokenAndLogoutRevokes() {
         String email = "refresh-" + System.nanoTime() + "@pfm.me";
+        registerAndVerify("Refresh", email, "tajna123");
 
-        String firstCookie = given()
-                .contentType("application/json")
-                .body(Map.of("name", "Refresh", "email", email, "password", "tajna123"))
-                .when().post("/api/auth/register")
-                .then().statusCode(201)
+        // Prijava izdaje refresh kolacic
+        String firstCookie = given().contentType("application/json")
+                .body(Map.of("email", email, "password", "tajna123"))
+                .when().post("/api/auth/login")
+                .then().statusCode(200)
                 .cookie("refresh_token", notNullValue())
                 .extract().cookie("refresh_token");
 
@@ -96,7 +130,6 @@ class AuthResourceTest {
         String newToken = refreshed.path("token");
         String newCookie = refreshed.cookie("refresh_token");
 
-        // Novi pristupni token je ispravan
         given().header("Authorization", "Bearer " + newToken)
                 .when().get("/api/auth/me")
                 .then().statusCode(200)
@@ -120,16 +153,11 @@ class AuthResourceTest {
     @Test
     void forgotPasswordSendsEmailAndResetWorks() {
         String email = "reset-" + System.nanoTime() + "@pfm.me";
+        registerAndVerify("Reset", email, "staraLozinka");
 
-        given().contentType("application/json")
-                .body(Map.of("name", "Reset", "email", email, "password", "staraLozinka"))
-                .when().post("/api/auth/register")
-                .then().statusCode(201);
-
-        // Odbaci verifikacioni email poslat pri registraciji da ostane samo onaj za reset
+        // Odbaci verifikacioni email da ostane samo onaj za reset
         mailbox.clear();
 
-        // Zahtjev za reset uvijek vraca 204 i salje email s linkom
         given().contentType("application/json")
                 .body(Map.of("email", email))
                 .when().post("/api/auth/forgot-password")
@@ -142,13 +170,12 @@ class AuthResourceTest {
         assertTrue(idx > 0, "Email mora sadržati link za reset");
         String token = text.substring(idx + "?reset=".length(), idx + "?reset=".length() + 64);
 
-        // Reset sa tokenom postavlja novu lozinku
         given().contentType("application/json")
                 .body(Map.of("token", token, "newPassword", "novaLozinka"))
                 .when().post("/api/auth/reset-password")
                 .then().statusCode(204);
 
-        // Stara lozinka vise ne radi, nova radi
+        // Stara lozinka vise ne radi, nova radi (nalog je vec verifikovan)
         given().contentType("application/json")
                 .body(Map.of("email", email, "password", "staraLozinka"))
                 .when().post("/api/auth/login")
@@ -159,54 +186,10 @@ class AuthResourceTest {
                 .when().post("/api/auth/login")
                 .then().statusCode(200);
 
-        // Token je jednokratan - ponovna upotreba je odbijena
+        // Token je jednokratan
         given().contentType("application/json")
                 .body(Map.of("token", token, "newPassword", "trecaLozinka"))
                 .when().post("/api/auth/reset-password")
-                .then().statusCode(400);
-    }
-
-    @Test
-    void registerSendsVerificationAndVerifyWorks() {
-        String email = "verify-" + System.nanoTime() + "@pfm.me";
-
-        String token = given().contentType("application/json")
-                .body(Map.of("name", "Verify", "email", email, "password", "tajna123"))
-                .when().post("/api/auth/register")
-                .then().statusCode(201)
-                .body("user.emailVerified", equalTo(false))
-                .extract().path("token");
-
-        // Verifikacioni email je poslat pri registraciji
-        List<Mail> sent = mailbox.getMailsSentTo(email);
-        assertEquals(1, sent.size(), "Očekivali smo verifikacioni email");
-        String text = sent.getFirst().getText();
-        int idx = text.indexOf("?verify=");
-        assertTrue(idx > 0, "Email mora sadržati link za potvrdu");
-        String verifyToken = text.substring(idx + "?verify=".length(), idx + "?verify=".length() + 64);
-
-        // Prije potvrde /me pokazuje da adresa nije potvrđena
-        given().header("Authorization", "Bearer " + token)
-                .when().get("/api/auth/me")
-                .then().statusCode(200)
-                .body("emailVerified", equalTo(false));
-
-        // Potvrda tokenom
-        given().contentType("application/json")
-                .body(Map.of("token", verifyToken))
-                .when().post("/api/auth/verify-email")
-                .then().statusCode(204);
-
-        // Sada je adresa potvrđena
-        given().header("Authorization", "Bearer " + token)
-                .when().get("/api/auth/me")
-                .then().statusCode(200)
-                .body("emailVerified", equalTo(true));
-
-        // Ponovna upotreba istog tokena je odbijena
-        given().contentType("application/json")
-                .body(Map.of("token", verifyToken))
-                .when().post("/api/auth/verify-email")
                 .then().statusCode(400);
     }
 
@@ -235,7 +218,7 @@ class AuthResourceTest {
                     .then().statusCode(401);
         }
 
-        // Sesti pokusaj je blokiran - 429 sa Retry-After, i to cak sa tacnom lozinkom
+        // Sesti pokusaj je blokiran - 429, i to cak sa tacnom lozinkom
         given().contentType("application/json")
                 .body(Map.of("email", email, "password", "tajna123"))
                 .when().post("/api/auth/login")
@@ -243,11 +226,41 @@ class AuthResourceTest {
                 .header("Retry-After", notNullValue());
     }
 
-    @Test
-    void registerValidationFails() {
+    // --- pomocne metode ---
+
+    private void register(String name, String email, String password) {
         given().contentType("application/json")
-                .body(Map.of("name", "", "email", "nije-email", "password", "123"))
+                .body(Map.of("name", name, "email", email, "password", password))
                 .when().post("/api/auth/register")
-                .then().statusCode(400);
+                .then().statusCode(201);
+    }
+
+    private String verificationTokenFor(String email) {
+        List<Mail> mails = mailbox.getMailsSentTo(email);
+        assertTrue(!mails.isEmpty(), "Nema poslatog verifikacionog emaila za " + email);
+        String text = mails.getLast().getText();
+        int idx = text.indexOf("?verify=");
+        assertTrue(idx > 0, "Email mora sadržati link za potvrdu");
+        return text.substring(idx + "?verify=".length(), idx + "?verify=".length() + 64);
+    }
+
+    private void verify(String token) {
+        given().contentType("application/json")
+                .body(Map.of("token", token))
+                .when().post("/api/auth/verify-email")
+                .then().statusCode(204);
+    }
+
+    private void registerAndVerify(String name, String email, String password) {
+        register(name, email, password);
+        verify(verificationTokenFor(email));
+    }
+
+    private String login(String email, String password) {
+        return given().contentType("application/json")
+                .body(Map.of("email", email, "password", password))
+                .when().post("/api/auth/login")
+                .then().statusCode(200)
+                .extract().path("token");
     }
 }

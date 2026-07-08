@@ -328,6 +328,7 @@
     cursor: pointer;
 }
 .auth-link:hover { text-decoration: underline; }
+.auth-resend { margin-top: 12px; }
 
 /* ---------------- Marquee traka ---------------- */
 .lp-marquee {

@@ -47,6 +47,9 @@ public class User {
     @Column(length = 64)
     private String emailVerificationToken;
 
+    // Do kada vazi verifikacioni token
+    private Instant emailVerificationExpires;
+
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "profile_id")
     private Profile profile;
@@ -145,6 +148,14 @@ public class User {
 
     public void setEmailVerificationToken(String emailVerificationToken) {
         this.emailVerificationToken = emailVerificationToken;
+    }
+
+    public Instant getEmailVerificationExpires() {
+        return emailVerificationExpires;
+    }
+
+    public void setEmailVerificationExpires(Instant emailVerificationExpires) {
+        this.emailVerificationExpires = emailVerificationExpires;
     }
 
     public Profile getProfile() {
