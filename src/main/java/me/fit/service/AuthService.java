@@ -85,6 +85,10 @@ public class AuthService {
     @Transactional
     public void changePassword(Long userId, ChangePasswordRequest request) {
         User user = em.find(User.class, userId);
+        if (user.getPasswordHash() == null) {
+            throw new ClientErrorException(
+                    "Ovaj nalog koristi Google prijavu i nema lozinku.", Response.Status.BAD_REQUEST);
+        }
         if (!BcryptUtil.matches(request.currentPassword(), user.getPasswordHash())) {
             throw new ClientErrorException("Trenutna lozinka nije ispravna", Response.Status.BAD_REQUEST);
         }

@@ -27,8 +27,12 @@ public class User {
     @Column(nullable = false)
     private String email;
 
-    @Column(nullable = false)
+    // Null za naloge kreirane preko Google-a (nemaju lozinku)
     private String passwordHash;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AuthProvider provider = AuthProvider.LOCAL;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -108,6 +112,14 @@ public class User {
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    public AuthProvider getProvider() {
+        return provider;
+    }
+
+    public void setProvider(AuthProvider provider) {
+        this.provider = provider;
     }
 
     public Role getRole() {

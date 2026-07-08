@@ -329,6 +329,23 @@
 }
 .auth-link:hover { text-decoration: underline; }
 .auth-resend { margin-top: 12px; }
+.google-auth { margin-top: 16px; }
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 0 14px;
+    color: var(--text-3);
+    font-size: 12px;
+}
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+#google-btn { display: flex; justify-content: center; min-height: 40px; }
 
 /* ---------------- Marquee traka ---------------- */
 .lp-marquee {

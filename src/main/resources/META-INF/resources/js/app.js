@@ -15,6 +15,9 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 let resetToken = null;
 // Poruka o ishodu potvrde emaila, prikazuje se nakon inicijalizacije
 let verifyNotice = null;
+// Google client id sa servera (null ako Google prijava nije podesena)
+let googleClientId = null;
+let googleReady = false;
 
 function esc(value) {
     return String(value ?? '').replace(/[&<>"']/g, ch => ({
@@ -346,6 +349,41 @@ function showAuth() {
         landingReady = true;
         initLanding();
     }
+    if (googleClientId) {
+        setupGoogleSignIn();
+        $('#google-auth').classList.remove('hidden'); // login je podrazumijevani mod
+    }
+}
+
+// Google Identity Services: ucitava skriptu i iscrtava dugme ako je client id podesen
+function setupGoogleSignIn() {
+    if (!googleClientId || googleReady) return;
+    const render = () => {
+        if (!window.google || !google.accounts || !google.accounts.id) return;
+        google.accounts.id.initialize({ client_id: googleClientId, callback: onGoogleCredential });
+        google.accounts.id.renderButton($('#google-btn'),
+            { theme: 'outline', size: 'large', width: 300, text: 'continue_with' });
+        googleReady = true;
+    };
+    if (window.google && window.google.accounts) { render(); return; }
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = render;
+    document.head.appendChild(script);
+}
+
+async function onGoogleCredential(response) {
+    try {
+        const auth = await api('/api/auth/google', {
+            method: 'POST', body: { idToken: response.credential }
+        });
+        saveAuth(auth);
+        showApp();
+    } catch (err) {
+        showAuthError(err.message);
+    }
 }
 
 // Landing stranica: dugmad, brojaci, scroll-reveal, marquee
@@ -543,6 +581,8 @@ function switchAuthTab(mode) {
     $('#auth-error').classList.add('hidden');
     $('#auth-success').classList.add('hidden');
     $('#auth-resend').classList.add('hidden');
+    // Google dugme ima smisla samo uz prijavu i registraciju
+    $('#google-auth').classList.toggle('hidden', !(googleClientId && tabsVisible));
 }
 
 $('#forgot-link').addEventListener('click', () => switchAuthTab('forgot'));
@@ -2414,6 +2454,12 @@ if ('serviceWorker' in navigator) {
 
 // Inicijalizacija
 (async function init() {
+    // Da li je Google prijava dostupna (client id sa servera)
+    try {
+        const cfg = await api('/api/auth/config');
+        googleClientId = cfg.googleClientId;
+    } catch (ignored) { /* Google prijava nije obavezna */ }
+
     const params = new URLSearchParams(location.search);
 
     // Link iz emaila za reset lozinke: prikazi formu za novu lozinku

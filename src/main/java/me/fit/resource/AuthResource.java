@@ -18,11 +18,14 @@ import me.fit.security.CurrentUser;
 import me.fit.security.LoginAttemptService;
 import me.fit.service.AuthService;
 import me.fit.service.EmailVerificationService;
+import me.fit.service.GoogleAuthService;
 import me.fit.service.PasswordResetService;
 import me.fit.service.RefreshTokenService;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.time.Duration;
+import java.util.Collections;
+import java.util.Map;
 
 @Path("/api/auth")
 @Produces(MediaType.APPLICATION_JSON)
@@ -49,8 +52,30 @@ public class AuthResource {
     @Inject
     EmailVerificationService emailVerification;
 
+    @Inject
+    GoogleAuthService googleAuth;
+
     @ConfigProperty(name = "app.auth.cookie-secure", defaultValue = "false")
     boolean cookieSecure;
+
+    // Frontendu govori da li je Google prijava dostupna i sa kojim client id-om
+    @GET
+    @Path("/config")
+    @PermitAll
+    public Map<String, Object> config() {
+        return Collections.singletonMap("googleClientId",
+                googleAuth.isConfigured() ? googleAuth.clientId() : null);
+    }
+
+    // Prijava/registracija preko Google naloga. Google verifikuje email pa je nalog odmah potvrdjen.
+    @POST
+    @Path("/google")
+    @PermitAll
+    public Response google(@Valid GoogleLoginRequest request) {
+        AuthResponse response = googleAuth.authenticate(request.idToken());
+        String refresh = refreshTokens.issue(response.user().id());
+        return Response.ok(response).cookie(refreshCookie(refresh)).build();
+    }
 
     // Registracija kreira neverifikovan nalog i salje link za potvrdu.
     // Ne prijavljuje korisnika - prvo mora potvrditi email adresu.

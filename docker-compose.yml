@@ -27,6 +27,20 @@ services:
       # Demo podaci pri prvom pokretanju (demo@pfm.me / demo123)
       SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
       UPLOADS_DIR: /app/uploads
+      # Google prijava (opciono): postavi client id iz Google Cloud konzole.
+      # Ako je prazno, opcija se ne prikazuje.
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      # Slanje emaila (reset lozinke, potvrda adrese). Podrazumijevano mock (link u logu);
+      # za pravo slanje postavi MAILER_MOCK=false i SMTP podatke.
+      MAILER_MOCK: ${MAILER_MOCK:-true}
+      MAILER_HOST: ${MAILER_HOST:-smtp.example.com}
+      MAILER_PORT: ${MAILER_PORT:-587}
+      MAILER_USERNAME: ${MAILER_USERNAME:-}
+      MAILER_PASSWORD: ${MAILER_PASSWORD:-}
+      MAILER_FROM: ${MAILER_FROM:-Moje finansije <no-reply@moje-finansije.me>}
+      # Osnovni URL za linkove u emailu i Secure flag na kolacicu (za HTTPS deploy)
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
       # Za produkciju: generisi vlastite kljuceve (vidi .env.example),
       # mountaj ih dole i otkomentarisi ove dvije varijable
       # JWT_PRIVATE_KEY_LOCATION: /app/keys/privateKey.pem

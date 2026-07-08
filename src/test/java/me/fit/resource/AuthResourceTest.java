@@ -14,6 +14,7 @@ import java.util.Map;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -224,6 +225,22 @@ class AuthResourceTest {
                 .when().post("/api/auth/login")
                 .then().statusCode(429)
                 .header("Retry-After", notNullValue());
+    }
+
+    @Test
+    void googleConfigDisabledByDefault() {
+        // Bez GOOGLE_CLIENT_ID Google prijava nije dostupna
+        given().when().get("/api/auth/config")
+                .then().statusCode(200)
+                .body("googleClientId", nullValue());
+    }
+
+    @Test
+    void googleLoginRejectedWhenNotConfigured() {
+        given().contentType("application/json")
+                .body(Map.of("idToken", "bilo-sta"))
+                .when().post("/api/auth/google")
+                .then().statusCode(503);
     }
 
     // --- pomocne metode ---
