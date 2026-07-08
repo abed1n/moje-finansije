@@ -355,6 +355,8 @@ function showAuth() {
         setupGoogleSignIn();
         $('#google-auth').classList.remove('hidden'); // login je podrazumijevani mod
     }
+    // "Zaboravili ste lozinku?" ima smisla samo ako slanje emaila radi (kad je verifikacija ukljucena)
+    $('#forgot-link').classList.toggle('hidden', !verificationRequired);
 }
 
 // Google Identity Services: ucitava skriptu i iscrtava dugme ako je client id podesen
@@ -616,17 +618,31 @@ $('#reset-form').addEventListener('submit', async e => {
     }
 });
 
+// Prikazuje "u toku..." na submit dugmetu forme dok traje akcija (feedback pri prijavi)
+async function withButtonLoading(formEl, loadingText, fn) {
+    const btn = formEl.querySelector('button[type="submit"]');
+    const original = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = loadingText; }
+    try {
+        await fn();
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = original; }
+    }
+}
+
 $('#login-form').addEventListener('submit', async e => {
     e.preventDefault();
     const form = new FormData(e.target);
     const email = form.get('email');
     try {
-        const auth = await api('/api/auth/login', {
-            method: 'POST',
-            body: { email, password: form.get('password') }
+        await withButtonLoading(e.target, 'Prijavljivanje...', async () => {
+            const auth = await api('/api/auth/login', {
+                method: 'POST',
+                body: { email, password: form.get('password') }
+            });
+            saveAuth(auth);
+            showApp();
         });
-        saveAuth(auth);
-        showApp();
     } catch (err) {
         showAuthError(err.message);
         // 403 = nalog nije verifikovan: ponudi ponovno slanje linka
@@ -659,22 +675,24 @@ $('#register-form').addEventListener('submit', async e => {
     const email = form.get('email');
     const password = form.get('password');
     try {
-        await api('/api/auth/register', {
-            method: 'POST',
-            body: { name: form.get('name'), email, password }
+        await withButtonLoading(e.target, 'Kreiranje naloga...', async () => {
+            await api('/api/auth/register', {
+                method: 'POST',
+                body: { name: form.get('name'), email, password }
+            });
+            if (verificationRequired) {
+                // Nalog kreiran, ali se prvo mora potvrditi email
+                e.target.reset();
+                switchAuthTab('login');
+                showAuthSuccess('Nalog je kreiran. Poslali smo link za potvrdu na ' + email
+                    + ' — potvrdite adresu da biste se prijavili.');
+            } else {
+                // Verifikacija iskljucena: odmah prijavi korisnika
+                const auth = await api('/api/auth/login', { method: 'POST', body: { email, password } });
+                saveAuth(auth);
+                showApp();
+            }
         });
-        if (verificationRequired) {
-            // Nalog kreiran, ali se prvo mora potvrditi email
-            e.target.reset();
-            switchAuthTab('login');
-            showAuthSuccess('Nalog je kreiran. Poslali smo link za potvrdu na ' + email
-                + ' — potvrdite adresu da biste se prijavili.');
-        } else {
-            // Verifikacija iskljucena: odmah prijavi korisnika
-            const auth = await api('/api/auth/login', { method: 'POST', body: { email, password } });
-            saveAuth(auth);
-            showApp();
-        }
     } catch (err) {
         showAuthError(err.message);
     }
