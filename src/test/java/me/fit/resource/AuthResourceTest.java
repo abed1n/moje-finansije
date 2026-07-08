@@ -3,6 +3,8 @@ package me.fit.resource;
 import io.quarkus.mailer.Mail;
 import io.quarkus.mailer.MockMailbox;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.QuarkusTestProfile;
+import io.quarkus.test.junit.TestProfile;
 import io.restassured.response.Response;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,8 +20,19 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+// Testovi rade kao da Google prijava nije podesena (nezavisno od lokalnog .env-a),
+// jer provjeravaju upravo email/lozinka tok i ponasanje kad Google nije konfigurisan.
 @QuarkusTest
+@TestProfile(AuthResourceTest.GoogleDisabled.class)
 class AuthResourceTest {
+
+    // Prazan (blank) client id znaci "Google nije podesen"; nadjacava vrijednost iz .env-a
+    public static class GoogleDisabled implements QuarkusTestProfile {
+        @Override
+        public Map<String, String> getConfigOverrides() {
+            return Map.of("google.client-id", " ");
+        }
+    }
 
     @Inject
     MockMailbox mailbox;
