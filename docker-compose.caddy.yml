@@ -1,0 +1,27 @@
+# Dodatak za produkciju: Caddy reverse proxy sa automatskim HTTPS-om.
+# Pokrece se ZAJEDNO sa osnovnim compose fajlom:
+#   docker compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
+#
+# Caddy sluta na 80/443 i prosljedjuje saobracaj internom servisu "app".
+# Lokalni demo koristi samo osnovni docker-compose.yml (bez ovog fajla).
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: pfm-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?Postavi APP_DOMAIN u .env (npr. tvoj-domen.me)}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+
+volumes:
+  caddy-data:
+  caddy-config:

@@ -19,7 +19,9 @@ services:
     build: .
     container_name: pfm-app
     ports:
-      - "${APP_PORT:-8080}:8080"
+      # Lokalno je izlozen na svim adresama; u produkciji iza Caddy-ja postavi
+      # APP_BIND=127.0.0.1 u .env da app ne bude direktno dostupan sa interneta.
+      - "${APP_BIND:-0.0.0.0}:${APP_PORT:-8080}:8080"
     environment:
       DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-pfm_db}
       DB_USER: ${POSTGRES_USER:-pfm_user}

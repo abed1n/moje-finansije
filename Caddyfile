@@ -1,0 +1,7 @@
+# Reverse proxy sa automatskim HTTPS-om (Let's Encrypt).
+# Domen se cita iz APP_DOMAIN varijable (vidi .env).
+# Caddy sam izvadi i obnavlja SSL sertifikat.
+
+{$APP_DOMAIN} {
+	reverse_proxy app:8080
+}

@@ -43,6 +43,8 @@ docker compose up --build
 
 Aplikacija je na http://localhost:8080. Pri prvom pokretanju se ubace demo podaci:
 
+> Za javni deploy na server (HTTPS, Google prijava, slanje emaila) vidi **[DEPLOY.md](DEPLOY.md)** — vodič korak po korak.
+
 - demo korisnik: demo@pfm.me / demo123
 - admin: admin@pfm.me / admin123
 
