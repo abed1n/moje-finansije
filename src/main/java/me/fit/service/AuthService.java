@@ -52,6 +52,13 @@ public class AuthService {
         return new AuthResponse(tokenService.generateToken(user), UserDto.from(user));
     }
 
+    // Novi pristupni token za vec prijavljenog korisnika (koristi se pri osvjezavanju)
+    @Transactional
+    public AuthResponse issueFor(Long userId) {
+        User user = em.find(User.class, userId);
+        return new AuthResponse(tokenService.generateToken(user), UserDto.from(user));
+    }
+
     @Transactional
     public UserDto updateProfile(Long userId, ProfileUpdateRequest request) {
         User user = em.find(User.class, userId);

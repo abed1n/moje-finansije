@@ -10,17 +10,24 @@ import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
 import me.fit.dto.*;
 import me.fit.exception.TooManyRequestsException;
 import me.fit.security.CurrentUser;
 import me.fit.security.LoginAttemptService;
 import me.fit.service.AuthService;
+import me.fit.service.RefreshTokenService;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+import java.time.Duration;
 
 @Path("/api/auth")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class AuthResource {
+
+    private static final String REFRESH_COOKIE = "refresh_token";
 
     @Inject
     AuthService authService;
@@ -31,17 +38,28 @@ public class AuthResource {
     @Inject
     LoginAttemptService loginAttempts;
 
+    @Inject
+    RefreshTokenService refreshTokens;
+
+    @ConfigProperty(name = "app.auth.cookie-secure", defaultValue = "false")
+    boolean cookieSecure;
+
     @POST
     @Path("/register")
     @PermitAll
     public Response register(@Valid RegisterRequest request) {
-        return Response.status(Response.Status.CREATED).entity(authService.register(request)).build();
+        AuthResponse response = authService.register(request);
+        String refresh = refreshTokens.issue(response.user().id());
+        return Response.status(Response.Status.CREATED)
+                .entity(response)
+                .cookie(refreshCookie(refresh))
+                .build();
     }
 
     @POST
     @Path("/login")
     @PermitAll
-    public AuthResponse login(@Valid LoginRequest request, @Context HttpServerRequest http) {
+    public Response login(@Valid LoginRequest request, @Context HttpServerRequest http) {
         String key = clientIp(http) + "|" + request.email().trim().toLowerCase();
         long wait = loginAttempts.secondsUntilUnlock(key);
         if (wait > 0) {
@@ -52,13 +70,55 @@ public class AuthResource {
         try {
             AuthResponse response = authService.login(request);
             loginAttempts.recordSuccess(key);
-            return response;
+            String refresh = refreshTokens.issue(response.user().id());
+            return Response.ok(response).cookie(refreshCookie(refresh)).build();
         } catch (WebApplicationException e) {
             if (e.getResponse().getStatus() == Response.Status.UNAUTHORIZED.getStatusCode()) {
                 loginAttempts.recordFailure(key);
             }
             throw e;
         }
+    }
+
+    // Kratkotrajni pristupni token je istekao: refresh kolacic ga tiho obnavlja, uz rotaciju
+    @POST
+    @Path("/refresh")
+    @PermitAll
+    @Consumes(MediaType.WILDCARD)
+    public Response refresh(@CookieParam(REFRESH_COOKIE) String refreshToken) {
+        RefreshTokenService.Rotated rotated = refreshTokens.rotate(refreshToken);
+        AuthResponse response = authService.issueFor(rotated.userId());
+        return Response.ok(response).cookie(refreshCookie(rotated.rawToken())).build();
+    }
+
+    @POST
+    @Path("/logout")
+    @PermitAll
+    @Consumes(MediaType.WILDCARD)
+    public Response logout(@CookieParam(REFRESH_COOKIE) String refreshToken) {
+        if (refreshToken != null) {
+            refreshTokens.revoke(refreshToken);
+        }
+        return Response.noContent().cookie(expiredRefreshCookie()).build();
+    }
+
+    private NewCookie refreshCookie(String value) {
+        return baseCookie(value)
+                .maxAge((int) Duration.ofDays(refreshTokens.refreshDays()).toSeconds())
+                .build();
+    }
+
+    private NewCookie expiredRefreshCookie() {
+        return baseCookie("").maxAge(0).build();
+    }
+
+    private NewCookie.Builder baseCookie(String value) {
+        return new NewCookie.Builder(REFRESH_COOKIE)
+                .value(value)
+                .path("/api/auth")
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite(NewCookie.SameSite.STRICT);
     }
 
     // IP klijenta - iza proxija se cita iz X-Forwarded-For, inace direktna adresa

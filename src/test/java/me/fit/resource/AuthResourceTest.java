@@ -1,6 +1,7 @@
 package me.fit.resource;
 
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.response.Response;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -54,6 +55,51 @@ class AuthResourceTest {
     @Test
     void meWithoutTokenReturns401() {
         given().when().get("/api/auth/me").then().statusCode(401);
+    }
+
+    @Test
+    void refreshRotatesTokenAndLogoutRevokes() {
+        String email = "refresh-" + System.nanoTime() + "@pfm.me";
+
+        String firstCookie = given()
+                .contentType("application/json")
+                .body(Map.of("name", "Refresh", "email", email, "password", "tajna123"))
+                .when().post("/api/auth/register")
+                .then().statusCode(201)
+                .cookie("refresh_token", notNullValue())
+                .extract().cookie("refresh_token");
+
+        // Osvjezavanje vraca novi pristupni token i rotira refresh kolacic
+        Response refreshed = given()
+                .cookie("refresh_token", firstCookie)
+                .when().post("/api/auth/refresh")
+                .then().statusCode(200)
+                .body("token", notNullValue())
+                .cookie("refresh_token", notNullValue())
+                .extract().response();
+
+        String newToken = refreshed.path("token");
+        String newCookie = refreshed.cookie("refresh_token");
+
+        // Novi pristupni token je ispravan
+        given().header("Authorization", "Bearer " + newToken)
+                .when().get("/api/auth/me")
+                .then().statusCode(200)
+                .body("email", equalTo(email));
+
+        // Stari refresh kolacic je ponisten rotacijom
+        given().cookie("refresh_token", firstCookie)
+                .when().post("/api/auth/refresh")
+                .then().statusCode(401);
+
+        // Odjava opoziva i vazeci refresh token
+        given().cookie("refresh_token", newCookie)
+                .when().post("/api/auth/logout")
+                .then().statusCode(204);
+
+        given().cookie("refresh_token", newCookie)
+                .when().post("/api/auth/refresh")
+                .then().statusCode(401);
     }
 
     @Test

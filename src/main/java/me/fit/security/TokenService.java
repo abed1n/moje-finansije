@@ -15,8 +15,9 @@ public class TokenService {
     @ConfigProperty(name = "mp.jwt.verify.issuer")
     String issuer;
 
-    @ConfigProperty(name = "app.jwt.token-duration-hours", defaultValue = "24")
-    long tokenDurationHours;
+    // Kratko trajanje: kad istekne, aplikacija ga tiho obnovi refresh tokenom
+    @ConfigProperty(name = "app.jwt.access-token-minutes", defaultValue = "15")
+    long accessTokenMinutes;
 
     public String generateToken(User user) {
         return Jwt.issuer(issuer)
@@ -24,7 +25,7 @@ public class TokenService {
                 .subject(String.valueOf(user.getId()))
                 .groups(Set.of(user.getRole().name()))
                 .claim(Claims.full_name.name(), user.getName())
-                .expiresIn(Duration.ofHours(tokenDurationHours))
+                .expiresIn(Duration.ofMinutes(accessTokenMinutes))
                 .sign();
     }
 }

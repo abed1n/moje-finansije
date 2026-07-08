@@ -76,7 +76,7 @@ function icon(name, cls = 'ico') {
 }
 
 // API klijent
-async function api(path, options = {}) {
+async function api(path, options = {}, retried = false) {
     const headers = options.headers || {};
     if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
     let body = options.body;
@@ -86,6 +86,10 @@ async function api(path, options = {}) {
     }
     const res = await fetch(path, { method: options.method || 'GET', headers, body });
     if (res.status === 401 && state.token) {
+        // Pristupni token je vjerovatno istekao - probaj ga jednom tiho obnoviti pa ponovi zahtjev
+        if (!retried && await refreshAccessToken()) {
+            return api(path, { ...options, headers: {} }, true);
+        }
         logout();
         throw new Error('Sesija je istekla, prijavite se ponovo');
     }
@@ -100,6 +104,19 @@ async function api(path, options = {}) {
     }
     if (res.status === 204) return null;
     return res.json();
+}
+
+// Dobavlja novi pristupni token pomocu refresh kolacica; vraca true ako je uspjelo
+async function refreshAccessToken() {
+    try {
+        const res = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'same-origin' });
+        if (!res.ok) return false;
+        const auth = await res.json();
+        saveAuth(auth);
+        return true;
+    } catch (ignored) {
+        return false;
+    }
 }
 
 // Toast + modal
@@ -303,6 +320,8 @@ function saveAuth(auth) {
 }
 
 function logout() {
+    // Opozovi refresh token na serveru (kolacic se salje automatski); ne blokiramo odjavu
+    fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
     state.token = null;
     state.user = null;
     localStorage.removeItem('pfm_token');
