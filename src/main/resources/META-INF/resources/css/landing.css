@@ -329,6 +329,38 @@
 }
 .auth-link:hover { text-decoration: underline; }
 .auth-resend { margin-top: 12px; }
+.auth-loading {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(7, 23, 16, .55);
+    backdrop-filter: blur(2px);
+}
+.auth-loading-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #ffffff;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 16px 22px;
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg, 0 20px 50px rgba(0, 0, 0, .25));
+}
+.auth-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2.5px solid rgba(0, 0, 0, .15);
+    border-top-color: var(--lp-mint-ink, #0c8f5f);
+    border-radius: 50%;
+    animation: auth-spin .7s linear infinite;
+}
+@keyframes auth-spin { to { transform: rotate(360deg); } }
+
 .google-auth { margin-top: 16px; }
 .auth-divider {
     display: flex;

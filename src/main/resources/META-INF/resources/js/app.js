@@ -378,7 +378,13 @@ function setupGoogleSignIn() {
     document.head.appendChild(script);
 }
 
+// Google dugme crta sam Google, pa mu dodajemo poseban loading prekrivac radi doslednosti
+function showAuthLoading(on) {
+    $('#auth-loading').classList.toggle('hidden', !on);
+}
+
 async function onGoogleCredential(response) {
+    showAuthLoading(true);
     try {
         const auth = await api('/api/auth/google', {
             method: 'POST', body: { idToken: response.credential }
@@ -387,6 +393,8 @@ async function onGoogleCredential(response) {
         showApp();
     } catch (err) {
         showAuthError(err.message);
+    } finally {
+        showAuthLoading(false);
     }
 }
 
@@ -2512,13 +2520,18 @@ if ('serviceWorker' in navigator) {
         }
     }
 
+    // Ako nema pristupnog tokena, probaj obnoviti sesiju preko refresh kolacica -
+    // tako korisnik ostaje prijavljen (i poslije zatvaranja browsera) dok se sam ne odjavi.
     if (!state.token) {
-        showAuth();
-        if (verifyNotice) {
-            verifyNotice.ok ? showAuthSuccess(verifyNotice.message) : showAuthError(verifyNotice.message);
-            verifyNotice = null;
+        const refreshed = await refreshAccessToken();
+        if (!refreshed) {
+            showAuth();
+            if (verifyNotice) {
+                verifyNotice.ok ? showAuthSuccess(verifyNotice.message) : showAuthError(verifyNotice.message);
+                verifyNotice = null;
+            }
+            return;
         }
-        return;
     }
     try {
         const me = await api('/api/auth/me');
