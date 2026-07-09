@@ -1267,8 +1267,10 @@ async function renderTransactions() {
         const link = document.createElement('a');
         link.href = url;
         link.download = 'transakcije-' + new Date().toISOString().slice(0, 10) + '.csv';
+        document.body.appendChild(link);
         link.click();
-        URL.revokeObjectURL(url);
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
         toast('CSV fajl je preuzet (' + allTransactions.length + ' transakcija)');
     }
 
@@ -1303,10 +1305,11 @@ function openImportModal(onDone) {
                         ${state.accounts.map(a => `<option value="${a.id}">${esc(a.name)} (${esc(a.currency)})</option>`).join('')}
                     </select></div>
                 <div class="form-field"><span>CSV fajl izvoda iz e-bankinga</span>
-                    <input type="file" name="file" accept=".csv,text/csv" required></div>
+                    <input type="file" name="file" required></div>
             </div>
             <p class="muted" style="font-size:12.5px;margin-top:12px">
-                Podržani su izvodi sa kolonama datum, opis i iznos (ili odvojene kolone uplata/isplata).
+                Fajl mora biti <strong>CSV</strong> (u e-bankingu izaberite izvoz u CSV; Excel fajl
+                sačuvajte kao CSV). Podržane su kolone datum, opis i iznos (ili odvojene uplata/isplata).
                 Prije uvoza dobijate pregled sa predloženim kategorijama koje možete izmijeniti.</p>
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">Učitaj i pregledaj</button>
