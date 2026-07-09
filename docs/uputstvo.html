@@ -1,0 +1,394 @@
+<!doctype html><html lang="sr" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Moje finansije — Uputstvo za korišćenje</title><style>.theme-toggle{display:none!important}@page{margin:15mm 13mm}@media print{h2,h3{break-after:avoid}.callout-card,.tip,ol.steps li,ul.plain li{break-inside:avoid}.content>section{break-inside:auto}}</style></head><body><style>
+  :root {
+    --ground: #f4f8f5;
+    --panel: #ffffff;
+    --ink: #14231b;
+    --ink-soft: #43554b;
+    --muted: #6d7f75;
+    --line: #e0eae4;
+    --line-soft: #eef4f0;
+    --accent: #0c8f5f;
+    --accent-deep: #0a6f4a;
+    --accent-wash: #e8f4ee;
+    --income: #0a7a49;
+    --expense: #c93b3b;
+    --shadow: 0 1px 2px rgba(16,45,32,.05), 0 10px 30px rgba(16,45,32,.06);
+    --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0d1512;
+      --panel: #141f1a;
+      --ink: #e9f1ec;
+      --ink-soft: #b9c8c0;
+      --muted: #8ba095;
+      --line: #23322b;
+      --line-soft: #1a2620;
+      --accent: #34d399;
+      --accent-deep: #6ee7b7;
+      --accent-wash: #16241d;
+      --income: #46c98a;
+      --expense: #e77373;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 14px 34px rgba(0,0,0,.34);
+    }
+  }
+  :root[data-theme="light"] {
+    --ground: #f4f8f5; --panel: #ffffff; --ink: #14231b; --ink-soft: #43554b; --muted: #6d7f75;
+    --line: #e0eae4; --line-soft: #eef4f0; --accent: #0c8f5f; --accent-deep: #0a6f4a;
+    --accent-wash: #e8f4ee; --income: #0a7a49; --expense: #c93b3b;
+    --shadow: 0 1px 2px rgba(16,45,32,.05), 0 10px 30px rgba(16,45,32,.06);
+  }
+  :root[data-theme="dark"] {
+    --ground: #0d1512; --panel: #141f1a; --ink: #e9f1ec; --ink-soft: #b9c8c0; --muted: #8ba095;
+    --line: #23322b; --line-soft: #1a2620; --accent: #34d399; --accent-deep: #6ee7b7;
+    --accent-wash: #16241d; --income: #46c98a; --expense: #e77373;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 14px 34px rgba(0,0,0,.34);
+  }
+
+  * { box-sizing: border-box; }
+  body, .doc { margin: 0; }
+  .doc {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16.5px;
+    line-height: 1.68;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---- Header ---- */
+  .masthead { padding: 68px 0 30px; border-bottom: 1px solid var(--line); }
+  .brandline { display: flex; align-items: center; gap: 11px; margin-bottom: 26px; }
+  .mark {
+    width: 30px; height: 30px; border-radius: 9px; flex: 0 0 auto;
+    background: radial-gradient(circle at 32% 30%, var(--accent), var(--accent-deep));
+    box-shadow: inset 0 0 0 3px rgba(255,255,255,.16);
+  }
+  .brandline b { font-weight: 700; font-size: 15px; letter-spacing: -.01em; }
+  .eyebrow { text-transform: uppercase; letter-spacing: .18em; font-size: 11.5px; font-weight: 700; color: var(--accent); }
+  h1 {
+    font-family: var(--serif); font-weight: 600; font-size: clamp(38px, 6vw, 62px);
+    line-height: 1.02; letter-spacing: -.015em; margin: 16px 0 0; text-wrap: balance; color: var(--ink);
+  }
+  .lede { font-size: clamp(17px, 2.4vw, 20px); color: var(--ink-soft); max-width: 40ch; margin: 20px 0 0; }
+  .theme-toggle {
+    position: fixed; top: 18px; right: 18px; z-index: 20;
+    background: var(--panel); color: var(--ink-soft); border: 1px solid var(--line);
+    border-radius: 999px; padding: 7px 14px; font: 600 12.5px var(--sans); cursor: pointer; box-shadow: var(--shadow);
+  }
+  .theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ---- Layout: TOC + content ---- */
+  .layout { display: grid; grid-template-columns: 232px 1fr; gap: 52px; padding: 46px 0 90px; align-items: start; }
+  .toc { position: sticky; top: 26px; font-size: 14px; }
+  .toc .toc-h { text-transform: uppercase; letter-spacing: .15em; font-size: 11px; font-weight: 700; color: var(--muted); margin: 0 0 12px; }
+  .toc ol { list-style: none; margin: 0; padding: 0; counter-reset: t; }
+  .toc li { counter-increment: t; margin: 1px 0; }
+  .toc a {
+    display: grid; grid-template-columns: 24px 1fr; gap: 4px; align-items: baseline;
+    text-decoration: none; color: var(--ink-soft); padding: 5px 8px; border-radius: 8px; line-height: 1.35;
+  }
+  .toc a::before { content: counter(t, decimal-leading-zero); font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 700; font-size: 12px; }
+  .toc a:hover { background: var(--accent-wash); color: var(--ink); }
+
+  .content { min-width: 0; max-width: 680px; }
+  .content > section { padding: 34px 0; border-top: 1px solid var(--line); scroll-margin-top: 22px; }
+  .content > section:first-child { border-top: 0; padding-top: 6px; }
+  h2 {
+    font-family: var(--serif); font-weight: 600; font-size: clamp(26px, 3.6vw, 33px);
+    letter-spacing: -.01em; line-height: 1.12; margin: 0 0 6px; text-wrap: balance;
+  }
+  .sec-tag { text-transform: uppercase; letter-spacing: .16em; font-size: 11px; font-weight: 700; color: var(--accent); display: block; margin-bottom: 12px; }
+  h3 { font-size: 16.5px; font-weight: 700; letter-spacing: -.005em; margin: 26px 0 6px; color: var(--ink); }
+  p { margin: 12px 0; color: var(--ink-soft); }
+  .content strong { color: var(--ink); font-weight: 650; }
+  a.inline { color: var(--accent-deep); }
+
+  ul.plain { margin: 12px 0; padding: 0; list-style: none; }
+  ul.plain li { position: relative; padding: 4px 0 4px 22px; color: var(--ink-soft); }
+  ul.plain li::before { content: ""; position: absolute; left: 3px; top: 13px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  ol.steps { margin: 14px 0; padding: 0; list-style: none; counter-reset: s; }
+  ol.steps li { position: relative; padding: 3px 0 3px 34px; margin: 6px 0; counter-increment: s; color: var(--ink-soft); }
+  ol.steps li::before {
+    content: counter(s); position: absolute; left: 0; top: 3px;
+    width: 22px; height: 22px; border-radius: 7px; background: var(--accent-wash); color: var(--accent-deep);
+    font: 700 12px var(--sans); display: grid; place-items: center;
+  }
+
+  .tip {
+    margin: 20px 0; padding: 15px 18px; border-radius: 12px;
+    background: var(--accent-wash); border: 1px solid var(--line);
+    font-size: 14.5px; color: var(--ink-soft);
+  }
+  .tip b { color: var(--accent-deep); }
+
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+  .pill { font-size: 13px; font-weight: 600; padding: 5px 11px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); color: var(--ink-soft); }
+  .pill.in { color: var(--income); border-color: color-mix(in srgb, var(--income) 32%, var(--line)); }
+  .pill.out { color: var(--expense); border-color: color-mix(in srgb, var(--expense) 32%, var(--line)); }
+
+  .callout-card {
+    margin: 18px 0; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 14px; padding: 20px 22px; box-shadow: var(--shadow);
+  }
+  .callout-card h3 { margin-top: 0; }
+
+  footer { border-top: 1px solid var(--line); padding: 34px 0 60px; color: var(--muted); font-size: 13.5px; }
+
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; gap: 8px; padding-top: 30px; }
+    .toc { position: static; margin-bottom: 20px; padding: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
+    .content { max-width: none; }
+    .masthead { padding-top: 54px; }
+  }
+</style>
+
+<div class="doc">
+  <button class="theme-toggle" id="themeBtn" type="button">Tamna tema</button>
+
+  <header class="masthead">
+    <div class="wrap">
+      <div class="brandline"><span class="mark"></span><b>Moje finansije</b></div>
+      <span class="eyebrow">Uputstvo za korišćenje</span>
+      <h1>Sve tvoje pare<br>na jednom mjestu.</h1>
+      <p class="lede">Kompletan vodič kroz aplikaciju — čemu služi, šta sve nudi i kako se koristi. Bez ijedne tehničke riječi.</p>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="layout">
+      <nav class="toc" aria-label="Sadržaj">
+        <p class="toc-h">Sadržaj</p>
+        <ol>
+          <li><a href="#uvod">Čemu služi</a></li>
+          <li><a href="#prijava">Prijava i nalog</a></li>
+          <li><a href="#pregled">Početna (Pregled)</a></li>
+          <li><a href="#racuni">Računi</a></li>
+          <li><a href="#transakcije">Transakcije</a></li>
+          <li><a href="#kategorije">Kategorije</a></li>
+          <li><a href="#budzeti">Budžeti</a></li>
+          <li><a href="#ciljevi">Ciljevi štednje</a></li>
+          <li><a href="#transferi">Transferi</a></li>
+          <li><a href="#ponavljajuce">Ponavljajuće</a></li>
+          <li><a href="#uvoz">Uvoz izvoda</a></li>
+          <li><a href="#uskladjivanje">Usklađivanje stanja</a></li>
+          <li><a href="#obavjestenja">Obavještenja</a></li>
+          <li><a href="#izvoz">Izvoz i alati</a></li>
+          <li><a href="#profil">Profil i tema</a></li>
+          <li><a href="#tok">Tipičan mjesec</a></li>
+        </ol>
+      </nav>
+
+      <main class="content">
+        <section id="uvod">
+          <span class="sec-tag">Uvod</span>
+          <h2>Čemu služi</h2>
+          <p><strong>Moje finansije</strong> je aplikacija koja ti pokazuje jasnu sliku tvog novca: koliko imaš, gdje ti odlazi i koliko uspijevaš da uštediš. Umjesto da nagađaš ili listaš bankovne izvode, sve stoji pregledno na jednom mjestu.</p>
+          <p>Sa njom vodiš svoje <strong>račune</strong> (tekući, štednja, gotovina, kartica), bilježiš <strong>prihode i rashode</strong>, postavljaš <strong>mjesečne budžete</strong>, praviš <strong>ciljeve štednje</strong> i, najzgodnije, <strong>uvezeš izvod iz banke</strong> pa ti se transakcije upišu same. Namijenjena je za ličnu upotrebu — tebi i onima kojima daš pristup.</p>
+          <div class="tip"><b>Ukratko:</b> ti unosiš (ili uvezeš) šta si potrošio i primio, a aplikacija računa stanja, crta grafike i podsjeća te na bitne stvari.</div>
+        </section>
+
+        <section id="prijava">
+          <span class="sec-tag">Početak</span>
+          <h2>Prijava i nalog</h2>
+          <p>Kad prvi put otvoriš aplikaciju, dočeka te početna stranica sa formom za prijavu. Ući možeš na tri načina:</p>
+          <ul class="plain">
+            <li><strong>Putem Google naloga</strong> — klikneš „Nastavi putem Google naloga“, izabereš svoj Google i unutra si. Najbrže, bez pamćenja lozinke.</li>
+            <li><strong>Email i lozinka</strong> — na kartici „Registracija“ upišeš ime, email i lozinku. Nalog se odmah napravi i uđeš.</li>
+            <li><strong>„Probaj demo“</strong> — dugme koje te ubaci u ogledni nalog sa izmišljenim podacima, da razgledaš aplikaciju bez pravljenja naloga.</li>
+          </ul>
+          <p>Kad se jednom prijaviš, <strong>ostaješ prijavljen</strong> — možeš zatvoriti stranicu ili browser i sljedeći put ideš pravo unutra. Izlaziš tek kad sam klikneš <strong>„Odjavi se“</strong>.</p>
+          <div class="tip"><b>Zaboravljena lozinka?</b> Ako si napravio nalog email-om i lozinkom, koristi opciju za novu lozinku na prijavi. Ako ulaziš preko Google-a, lozinka ti i ne treba.</div>
+        </section>
+
+        <section id="pregled">
+          <span class="sec-tag">Ekran po ekran</span>
+          <h2>Početna (Pregled)</h2>
+          <p>Prva stranica poslije prijave je tvoja kontrolna tabla. Na vrhu su četiri ključna broja: <strong>ukupno stanje</strong> svih računa, <strong>prihodi</strong> i <strong>rashodi</strong> u izabranom periodu, i <strong>razlika</strong> (koliko ti je ostalo).</p>
+          <p>Ispod su dva grafika: <strong>tok novca po mjesecima</strong> (koliko je ušlo i izašlo) i <strong>potrošnja po kategorijama</strong> (na šta najviše ide novac). Tu su i posljednje transakcije i napredak tvojih budžeta.</p>
+          <h3>Kako se koristi</h3>
+          <ul class="plain">
+            <li>Gore biraš <strong>period</strong> — ovaj mjesec, posljednja tri mjeseca ili godina — pa se sve brojke i grafici prilagode.</li>
+            <li>Klikom na kategoriju u grafiku dobiješ <strong>detaljan prikaz</strong> te kategorije: kako se kretala kroz mjesece i koje transakcije je čine.</li>
+          </ul>
+        </section>
+
+        <section id="racuni">
+          <span class="sec-tag">Ekran po ekran</span>
+          <h2>Računi</h2>
+          <p>Račun je mjesto gdje ti stoji novac. Aplikacija podržava više vrsta, pa ih možeš držati odvojeno i tačno znati gdje ti je koliko para.</p>
+          <div class="pills">
+            <span class="pill">Tekući račun</span><span class="pill">Štednja</span><span class="pill">Gotovina</span><span class="pill">Kreditna kartica</span>
+          </div>
+          <h3>Kako se koristi</h3>
+          <ol class="steps">
+            <li>Klikneš na dodavanje računa, daš mu ime i vrstu, upišeš valutu i početno stanje.</li>
+            <li>Po želji dodaš detalje banke — broj računa, naziv banke, datum otvaranja.</li>
+            <li>Stanje se dalje <strong>samo ažurira</strong> kako unosiš transakcije — ne moraš ga ručno mijenjati.</li>
+          </ol>
+          <p>Ako imaš račun u stranoj valuti, aplikacija ga u <strong>ukupnom stanju preračuna u EUR</strong> po kursu Evropske centralne banke, da vidiš sve zajedno.</p>
+        </section>
+
+        <section id="transakcije">
+          <span class="sec-tag">Ekran po ekran</span>
+          <h2>Transakcije</h2>
+          <p>Srce aplikacije — spisak svega što je ušlo i izašlo. Svaka transakcija je ili <span style="color:var(--income);font-weight:650">prihod</span> ili <span style="color:var(--expense);font-weight:650">rashod</span>.</p>
+          <h3>Šta upisuješ</h3>
+          <ul class="plain">
+            <li><strong>Iznos, datum i vrstu</strong> (prihod ili rashod) — obavezno.</li>
+            <li><strong>Kategoriju</strong> (npr. Hrana, Prevoz) i <strong>račun</strong> na koji se odnosi.</li>
+            <li><strong>Opis</strong> i <strong>tagove</strong> — kratke oznake za lakše pretraživanje.</li>
+            <li><strong>Prilog</strong> — možeš zakačiti sliku računa ili fakture uz transakciju.</li>
+          </ul>
+          <h3>Snalaženje u spisku</h3>
+          <ul class="plain">
+            <li><strong>Pretraga i filteri</strong> — po tekstu, kategoriji, vrsti i datumu.</li>
+            <li><strong>Sortiranje i strane</strong> — spisak se dijeli na strane da bude pregledan i kad ima puno stavki.</li>
+          </ul>
+          <p>Sa ove stranice pokrećeš i najkorisnije alate: <strong>uvoz izvoda</strong>, <strong>ponavljajuće transakcije</strong> i <strong>izvoz u CSV</strong> (opisani niže).</p>
+        </section>
+
+        <section id="kategorije">
+          <span class="sec-tag">Ekran po ekran</span>
+          <h2>Kategorije</h2>
+          <p>Kategorije su „fioke“ u koje razvrstavaš novac — Hrana, Prevoz, Računi i režije, Plata i slično. Zahvaljujući njima grafici imaju smisla i vidiš na šta ti stvarno odlazi.</p>
+          <p>Pri registraciji dobiješ <strong>gotov set od dvanaest kategorija</strong> da odmah možeš da radiš. Slobodno dodaješ svoje, mijenjaš im ime i ikonu. Klikom na kategoriju vidiš njen trend kroz vrijeme i sve transakcije u njoj.</p>
+        </section>
+
+        <section id="budzeti">
+          <span class="sec-tag">Ekran po ekran</span>
+          <h2>Budžeti</h2>
+          <p>Budžet je <strong>granica koliko želiš da potrošiš</strong> na nešto u toku mjeseca ili godine — na primjer 300 € na hranu mjesečno.</p>
+          <h3>Kako se koristi</h3>
+          <ol class="steps">
+            <li>Napraviš budžet, izabereš kategoriju (ili više njih) i upišeš limit.</li>
+            <li>Aplikacija prati potrošnju i pokazuje <strong>traku napretka</strong> i procenat iskorišćenog.</li>
+            <li>Kad se približiš limitu, budžet <strong>požuti (80%+)</strong>, a kad ga probiješ — pocrveni.</li>
+          </ol>
+          <div class="tip"><b>Zašto je korisno:</b> na vrijeme vidiš da si „pri kraju“ sa nekom kategorijom, prije nego što odeš u minus.</div>
+        </section>
+
+        <section id="ciljevi">
+          <span class="sec-tag">Ekran po ekran</span>
+          <h2>Ciljevi štednje</h2>
+          <p>Cilj ti pomaže da skupiš za nešto konkretno — ljetovanje, rezervu, novi telefon. Postaviš <strong>koliko želiš da skupiš</strong> i <strong>do kada</strong>, pa pratiš napredak.</p>
+          <h3>Dvije vrste ciljeva</h3>
+          <ul class="plain">
+            <li><strong>Ručni cilj</strong> — sam „uplaćuješ“ u cilj koliko odvojiš, i traka napretka raste.</li>
+            <li><strong>Cilj vezan za štedni račun</strong> — napredak <strong>prati stanje tog računa sam od sebe</strong>. Kad prebaciš novac na štednju, cilj se automatski pomjeri, bez ručnog unosa.</li>
+          </ul>
+          <p>Uz svaki cilj vidiš koliko još nedostaje i koliko je dana do roka.</p>
+        </section>
+
+        <section id="transferi">
+          <span class="sec-tag">Ekran po ekran</span>
+          <h2>Transferi</h2>
+          <p>Transfer je <strong>prebacivanje novca između tvojih računa</strong> — npr. sa tekućeg na štednju. Bitno: to <strong>nije</strong> ni prihod ni rashod (novac ti nije ni došao ni otišao, samo se premjestio), pa ne kvari tvoju statistiku potrošnje.</p>
+          <p>Aplikacija skine iznos sa jednog računa i doda ga na drugi, čuva istoriju prebacivanja, a svako se može i <strong>poništiti</strong> ako pogriješiš.</p>
+        </section>
+
+        <section id="ponavljajuce">
+          <span class="sec-tag">Ekran po ekran</span>
+          <h2>Ponavljajuće transakcije</h2>
+          <p>Neke stvari se plaćaju svakog mjeseca — kirija, plata, pretplate. Umjesto da ih unosiš ručno svaki put, napraviš <strong>pravilo</strong> i aplikacija ih <strong>sama upisuje</strong> kad dođe vrijeme.</p>
+          <p>Postaviš iznos, kategoriju, račun i dan u mjesecu — i to je to. Pravila možeš pauzirati ili obrisati kad ti više ne trebaju.</p>
+        </section>
+
+        <section id="uvoz">
+          <span class="sec-tag">Najveća pogodnost</span>
+          <h2>Uvoz izvoda iz banke</h2>
+          <p>Ovo ti štedi najviše vremena. Umjesto da svaku transakciju kucaš ručno, <strong>otpremiš izvod iz banke</strong> i aplikacija ih upiše sve odjednom.</p>
+          <div class="callout-card">
+            <h3>Šta se podržava</h3>
+            <p style="margin-bottom:0"><strong>CKB PDF izvještaj</strong> — baš onaj koji ti banka pošalje na email — ili <strong>CSV</strong> fajl izvoda. Aplikacija sama prepozna o čemu se radi.</p>
+          </div>
+          <h3>Kako ide</h3>
+          <ol class="steps">
+            <li>Na stranici Transakcije izabereš uvoz i otpremiš izvod (PDF ili CSV).</li>
+            <li>Dobiješ <strong>pregled</strong> svih transakcija sa <strong>predloženim kategorijama</strong> — aplikacija sama pogađa (npr. restoran → Hrana).</li>
+            <li>Prođeš kroz spisak, ispraviš kategoriju gdje treba, i potvrdiš.</li>
+          </ol>
+          <p>Najbolji dio: aplikacija <strong>uči iz tvojih ispravki</strong>. Kad jednom kažeš da neki trgovac ide u određenu kategoriju, sljedeći put će ga sam prepoznati. Uz to <strong>prepoznaje duplikate</strong> (da ne uveze isto dvaput) i <strong>prebacivanja između računa</strong>.</p>
+        </section>
+
+        <section id="uskladjivanje">
+          <span class="sec-tag">Ekran po ekran</span>
+          <h2>Usklađivanje stanja</h2>
+          <p>Ponekad se desi da se stanje u aplikaciji malo raziđe sa stvarnim stanjem u banci (zaboravljena sitnica, zaokruživanje). Umjesto da tražiš gdje je razlika, koristiš <strong>usklađivanje</strong>.</p>
+          <p>Na računu upišeš <strong>koliko stvarno imaš</strong>, a aplikacija sama proknjiži razliku kao jednu transakciju „usklađivanja“. Tako se aplikacija i banka <strong>garantovano poklope</strong>, u dva klika.</p>
+        </section>
+
+        <section id="obavjestenja">
+          <span class="sec-tag">Ekran po ekran</span>
+          <h2>Obavještenja</h2>
+          <p>U vrhu aplikacije stoji <strong>zvonce</strong>. Ono skuplja sve bitno na jedno mjesto, da ništa ne promakne:</p>
+          <ul class="plain">
+            <li><strong>Podsjetnik za izvod</strong> — kad je vrijeme da uvezeš novi bankovni izvod.</li>
+            <li><strong>Budžeti</strong> koji su prešli 80% limita.</li>
+            <li><strong>Ciljevi</strong> kojima ističe rok.</li>
+            <li><strong>Računi</strong> koji su otišli u minus.</li>
+          </ul>
+          <p>Broj na zvoncetu ti kaže koliko stvari čeka; klik na obavještenje te vodi pravo tamo gdje treba nešto da uradiš.</p>
+        </section>
+
+        <section id="izvoz">
+          <span class="sec-tag">Dodatno</span>
+          <h2>Izvoz i alati</h2>
+          <h3>Izvoz u CSV</h3>
+          <p>Bilo kad možeš <strong>preuzeti svoje transakcije kao CSV fajl</strong> (otvara se u Excelu). Poštuje filtere koje si postavio, pa možeš izvesti npr. samo rashode za jedan mjesec.</p>
+          <h3>Konverter valuta</h3>
+          <p>Ugrađen je i brzi <strong>konverter valuta</strong> po dnevnom kursu Evropske centralne banke — ukucaš iznos i vidiš koliko je u drugoj valuti.</p>
+        </section>
+
+        <section id="profil">
+          <span class="sec-tag">Podešavanja</span>
+          <h2>Profil i tema</h2>
+          <p>Na <strong>Profilu</strong> vidiš i mijenjaš svoje lične podatke (ime, adresu, telefon), mijenjaš lozinku (ako koristiš prijavu email-om) i vidiš status naloga.</p>
+          <p>Aplikacija ima i <strong>tamnu temu</strong> — jednim klikom prebaciš izgled na tamniji, ugodniji za oči uveče. Izbor se pamti.</p>
+          <div class="tip">Aplikacija radi jednako lijepo na <b>telefonu i računaru</b> — na telefonu se meni spusti u dno ekrana radi lakšeg dohvata palcem.</div>
+        </section>
+
+        <section id="tok">
+          <span class="sec-tag">Na kraju</span>
+          <h2>Kako izgleda tipičan mjesec</h2>
+          <p>Da sve sklopimo u priču — evo kako aplikacija radi za tebe iz mjeseca u mjesec:</p>
+          <ol class="steps">
+            <li><strong>Na početku</strong> napraviš račune i par budžeta za kategorije koje te najviše zanimaju.</li>
+            <li><strong>Kroz mjesec</strong> ili unosiš pokoju transakciju u hodu, ili jednostavno sačekaš kraj mjeseca.</li>
+            <li><strong>Kad stigne izvod</strong> iz banke, otpremiš ga — transakcije se upišu i kategorizuju gotovo same.</li>
+            <li><strong>Baciš pogled na Pregled</strong> — grafici ti pokažu gdje je novac otišao i koliko ti je ostalo.</li>
+            <li><strong>Zvonce te podsjeti</strong> ako si negdje probio budžet ili ako je vrijeme za novi izvod.</li>
+          </ol>
+          <p style="margin-top:18px">I to je sve. Bez tabela, bez računanja na papiru — jasna slika tvog novca, uvijek pri ruci.</p>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <footer>
+    <div class="wrap">Moje finansije — lični menadžer finansija. Ovo uputstvo možeš slobodno podijeliti sa svakim ko će koristiti aplikaciju.</div>
+  </footer>
+</div>
+
+<script>
+  (function () {
+    var btn = document.getElementById('themeBtn');
+    function current() {
+      var attr = document.documentElement.getAttribute('data-theme');
+      if (attr) return attr;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    function apply(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      btn.textContent = t === 'dark' ? 'Svijetla tema' : 'Tamna tema';
+    }
+    apply(current());
+    btn.addEventListener('click', function () {
+      apply(current() === 'dark' ? 'light' : 'dark');
+    });
+  })();
+</script>
+</body></html>
