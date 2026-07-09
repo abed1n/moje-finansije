@@ -1304,13 +1304,12 @@ function openImportModal(onDone) {
                     <select name="accountId">
                         ${state.accounts.map(a => `<option value="${a.id}">${esc(a.name)} (${esc(a.currency)})</option>`).join('')}
                     </select></div>
-                <div class="form-field"><span>CSV fajl izvoda iz e-bankinga</span>
+                <div class="form-field"><span>Izvod: CKB PDF ili CSV fajl</span>
                     <input type="file" name="file" required></div>
             </div>
             <p class="muted" style="font-size:12.5px;margin-top:12px">
-                Fajl mora biti <strong>CSV</strong> (u e-bankingu izaberite izvoz u CSV; Excel fajl
-                sačuvajte kao CSV). Podržane su kolone datum, opis i iznos (ili odvojene uplata/isplata).
-                Prije uvoza dobijate pregled sa predloženim kategorijama koje možete izmijeniti.</p>
+                Podržan je <strong>CKB PDF izvještaj</strong> (kako ti stiže iz banke) ili <strong>CSV</strong>
+                izvod. Prije uvoza dobijaš pregled sa predloženim kategorijama koje možeš izmijeniti.</p>
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">Učitaj i pregledaj</button>
             </div>

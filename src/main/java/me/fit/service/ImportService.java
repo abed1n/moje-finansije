@@ -9,6 +9,7 @@ import me.fit.dto.*;
 import me.fit.model.*;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -72,14 +73,18 @@ public class ImportService {
     }
 
     @Transactional
-    public ImportPreviewDto preview(User user, Long accountId, InputStream csv) {
+    public ImportPreviewDto preview(User user, Long accountId, InputStream input) {
         Account account = accountService.findOwned(user, accountId);
 
+        byte[] bytes = readAll(input);
         List<String> skipped = new ArrayList<>();
-        List<ParsedRow> parsed = parseCsv(csv, skipped);
+        // CKB izvod stize kao PDF; ostali kao CSV
+        List<ParsedRow> parsed = CkbPdfParser.isPdf(bytes)
+                ? CkbPdfParser.parse(bytes)
+                : parseCsv(new ByteArrayInputStream(bytes), skipped);
         if (parsed.isEmpty()) {
             throw new BadRequestException("U fajlu nije pronađena nijedna transakcija. "
-                    + "Očekuje se CSV izvod sa kolonama datum, opis i iznos.");
+                    + "Očekuje se CSV izvod (datum, opis, iznos) ili CKB PDF izvještaj.");
         }
 
         Set<String> existing = existingTransactionKeys(user, account, parsed);
@@ -335,6 +340,14 @@ public class ImportService {
             return null;
         }
         return new ColumnMap(date, description, amount, credit, debit);
+    }
+
+    private byte[] readAll(InputStream input) {
+        try {
+            return input.readAllBytes();
+        } catch (IOException e) {
+            throw new UncheckedIOException("Čitanje fajla nije uspjelo", e);
+        }
     }
 
     private List<String> readLines(InputStream input) {
